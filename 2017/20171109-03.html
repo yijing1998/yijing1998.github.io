@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  
+  <link rel="stylesheet" href="/lib/animate-css/animate.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.geeky.win","root":"/","scheme":"Gemini","version":"8.0.0-rc.4","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}}};
+  </script>
+
+  <meta name="description" content="lua 能够执行不同文件中的 lua 代码，这些分散在不同 .lua 文件中的 lua 代码所创建和使用的 lua 变量，它们有着不同的作用范围，本文将结合 lua 编译器行为进行详细分析。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="lua 环境中变量的作用范围剖析">
+<meta property="og:url" content="https://blog.geeky.win/2017/20171109-03.html">
+<meta property="og:site_name" content="Simple Mind">
+<meta property="og:description" content="lua 能够执行不同文件中的 lua 代码，这些分散在不同 .lua 文件中的 lua 代码所创建和使用的 lua 变量，它们有着不同的作用范围，本文将结合 lua 编译器行为进行详细分析。">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2017-11-09T06:38:25.000Z">
+<meta property="article:modified_time" content="2020-07-23T06:44:59.265Z">
+<meta property="article:author" content="Django">
+<meta property="article:tag" content="lua">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://blog.geeky.win/2017/20171109-03.html">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>lua 环境中变量的作用范围剖析 | Simple Mind</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <main class="main">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+        <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Simple Mind</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">Hello world!</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-首页">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-日常">
+
+    <a href="/categories/daily/" rel="section"><i class="fas fa-calendar-alt fa-fw"></i>日常</a>
+
+  </li>
+        <li class="menu-item menu-item-归纳">
+
+    <a href="/categories/conclusion/" rel="section"><i class="fas fa-cogs fa-fw"></i>归纳</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <section class="post-toc-wrap sidebar-panel">
+          <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#chunk-和-block"><span class="nav-number">1.</span> <span class="nav-text">chunk 和 block</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#chunk"><span class="nav-number">1.1.</span> <span class="nav-text">chunk</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#block"><span class="nav-number">1.2.</span> <span class="nav-text">block</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#局部变量、自由名称和上游值"><span class="nav-number">2.</span> <span class="nav-text">局部变量、自由名称和上游值</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#局部变量"><span class="nav-number">2.1.</span> <span class="nav-text">局部变量</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#自由名称"><span class="nav-number">2.2.</span> <span class="nav-text">自由名称</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#上游值"><span class="nav-number">2.3.</span> <span class="nav-text">上游值</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#变量-ENV"><span class="nav-number">3.</span> <span class="nav-text">变量 _ENV</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#环境变量-ENV"><span class="nav-number">3.1.</span> <span class="nav-text">环境变量 _ENV</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#可控环境-ENV"><span class="nav-number">3.2.</span> <span class="nav-text">可控环境 _ENV</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#free-name-传导和-ENV-G-成员"><span class="nav-number">3.3.</span> <span class="nav-text">free name 传导和 _ENV._G 成员</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#结束语"><span class="nav-number">4.</span> <span class="nav-text">结束语</span></a></li></ol></div>
+      </section>
+      <!--/noindex-->
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Django</p>
+  <div class="site-description" itemprop="description">A blog of nobody.</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">20</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+<div class="links-of-author animated">
+  <span class="links-of-author-item">
+    <img src="/images/rhca.png" alt="p2" width="70%" title="Red Hat Certified Architect in Infrastructure">
+    <a href='https://rhtapps.redhat.com/certifications/badge/verify/LRFJG4NEZN63FA65BCHVXX2KMAAEQU3CUPSQX2KSDXT6RW46LQ3T4V2LT2DQFPHMZNIKSLKTIWLQQ4U5NQYTCNA62RUWOCM34WWBUYQ='  title="Red Hat Certified Architect in Infrastructure" rel="noopener" target="_blank">RHCA</a>
+  </span>
+  <span class="links-of-author-item">
+    <img src="/images/rhce.png" alt="p2" width="70%" title="Red Hat Certified Engineer">
+    <a href='https://rhtapps.redhat.com/certifications/badge/verify/LRFJG4NEZN63FA65BCHVXX2KMAAEQU3CUPSQX2KSDXT6RW46LQ3XCZJWRJNV7ILTXVE4I6VB7OTCG4U5NQYTCNA62RUWOCM34WWBUYQ='  title="Red Hat Certified Engineer" rel="noopener" target="_blank">RHCE</a>
+  </span>
+  <span class="links-of-author-item">
+    <img src="/images/oci-cer.png" alt="p2" width="70%" title="OCI Developer Associate">
+    <a href='https://www.youracclaim.com/badges/7900cd96-5c33-49cf-8368-0397a8070048/public_url'  title="OCI Developer Associate" rel="noopener" target="_blank">OCI Developer Associate</a>
+  </span>
+  <span class="links-of-author-item">
+    <img src="/images/oci-cer.png" alt="p2" width="70%" title="OCI Foundation Associate">
+    <a href='https://www.youracclaim.com/badges/7900cd96-5c33-49cf-8368-0397a8070048/public_url' title="OCI Foundation Associate" rel="noopener" target="_blank">OCI Foundation Associate</a>
+  </span>
+</div>
+      </section>
+        <div class="back-to-top animated">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </header>
+
+      
+
+<noscript>
+  <div id="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+      <div class="main-inner">
+        
+
+        <div class="content post posts-expand">
+          
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://blog.geeky.win/2017/20171109-03.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Django">
+      <meta itemprop="description" content="A blog of nobody.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Simple Mind">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          lua 环境中变量的作用范围剖析
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-11-09 14:38:25" itemprop="dateCreated datePublished" datetime="2017-11-09T14:38:25+08:00">2017-11-09</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-07-23 14:44:59" itemprop="dateModified" datetime="2020-07-23T14:44:59+08:00">2020-07-23</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%BD%AF%E4%BB%B6%E2%80%A2%E7%8E%AF%E5%A2%83%E2%80%A2%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">软件•环境•工具</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p><em>lua</em> 能够执行不同文件中的 <em>lua</em> 代码，这些分散在不同 <em>.lua</em> 文件中的 <em>lua</em> 代码所创建和使用的 <em>lua</em> 变量，它们有着不同的作用范围，本文将结合 <em>lua</em> 编译器行为进行详细分析。</p>
+</blockquote>
+<a id="more"></a>
+<ul>
+<li><h3 id="chunk-和-block"><a href="#chunk-和-block" class="headerlink" title="chunk 和 block"></a><em>chunk</em> 和 <em>block</em></h3><ul>
+<li><h4 id="chunk"><a href="#chunk" class="headerlink" title="chunk"></a><em>chunk</em></h4><em>chunk</em> 指一段 <em>lua</em> 能够执行的代码，这段代码可能有一行，也可能有多行。<br>在 <em>lua</em> 解释器的交互环境中，<em>lua</em> 视每一行用户输入为一个 <em>chunk*。<br>当 *lua</em> 执行 <em>.lua</em> 文件时，<em>lua</em> 视整个文件为一个 <em>chunk*。<br>*lua</em> 以 <em>chunk</em> 为单位执行 <em>lua</em> 代码。</li>
+<li><h4 id="block"><a href="#block" class="headerlink" title="block"></a><em>block</em></h4><em>lua</em> 以 <em>block</em> 来区分变量的作用范围。<br><em>block</em> 分三类：<br><em>body of a control structure</em> （控制结构体），包括 <code>if then else</code>、<code>while</code>、<code>repeat</code>、<code>for</code>、<code>do end</code>等。<br><em>body of a function<em>（函数体），函数定义与函数结束之间。<br>*chunk</em>。根据 *chunk</em> 定义，<em>chunk</em> 内能够包含任何合法的 <em>lua</em> 代码，<em>chunk</em> 内部能够包含多个控制结构体和函数体，因此，定义在 <em>chunk</em> 内的变量能够被内部其他 <em>block</em> 使用。</li>
+</ul>
+</li>
+<li><h3 id="局部变量、自由名称和上游值"><a href="#局部变量、自由名称和上游值" class="headerlink" title="局部变量、自由名称和上游值"></a>局部变量、自由名称和上游值</h3><em>lua</em> 变量不需要 <em>declaration</em> 声明，赋值即创建，不限使用（尽力取值），如：<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line">b = <span class="number">10</span> <span class="comment">-- 创建变量 b</span></span><br><span class="line"><span class="built_in">print</span>(a) <span class="comment">-- 变量 a 不存在，返回 nil</span></span><br></pre></td></tr></table></figure>
+<em>lua</em> 变量的作用范围是 <em>block</em>，在变量作用范围的说明中，涉及局部变量、自由名称和上游值的概念，现一一说明。<ul>
+<li><h4 id="局部变量"><a href="#局部变量" class="headerlink" title="局部变量"></a>局部变量</h4>局部变量 <em>local variable</em> 的创建形式为 <code>local varname = ?</code>。局部变量的作用范围是创建时，该变量所在的 <em>block</em>。</li>
+<li><h4 id="自由名称"><a href="#自由名称" class="headerlink" title="自由名称"></a>自由名称</h4>自由名称 <em>free name</em> 的创建形式为 <code>freename = ?</code>。需要注意的是，该变量在之前并没有被创建，如：<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line"><span class="keyword">local</span> a = <span class="number">5</span></span><br><span class="line">a = <span class="number">4</span> <span class="comment">-- a 在之前已创建，a 是局部变量</span></span><br><span class="line">b = <span class="string">"hello"</span> <span class="comment">-- b 是自由名称</span></span><br></pre></td></tr></table></figure>
+自由名称由 <em>lua compiler</em> 编译器通过内部机制转换成类局部变量，对整个 <em>chunk</em> 起作用。</li>
+<li><h4 id="上游值"><a href="#上游值" class="headerlink" title="上游值"></a>上游值</h4>上游值 <em>upvalue*，由 *lua compiler</em> 管理和设置。<br>当 <em>lua</em> 执行 <em>chunk</em> 时，<em>lua compiler</em> 会为该 <em>chunk</em> 创建一个局部变量 <code>_ENV</code>，并赋值 <code>_ENV = upvalue</code>。<em>chunk</em> 内的全部自由名称的访问将被转换为对局部变量 <code>_ENV</code> 成员的访问，例如：<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line">a = <span class="number">5</span></span><br><span class="line"><span class="built_in">print</span>(b)</span><br><span class="line"><span class="comment">-- 将被转换为</span></span><br><span class="line"><span class="built_in">_ENV</span>.a = <span class="number">5</span></span><br><span class="line"><span class="built_in">print</span>(<span class="built_in">_ENV</span>.b)</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><h3 id="变量-ENV"><a href="#变量-ENV" class="headerlink" title="变量 _ENV"></a>变量 <code>_ENV</code></h3><ul>
+<li><h4 id="环境变量-ENV"><a href="#环境变量-ENV" class="headerlink" title="环境变量 _ENV"></a>环境变量 <code>_ENV</code></h4>类似于操作系统的环境变量，在 <em>lua</em> 运行环境中，<code>_ENV</code> 的值确定了当前 <em>chunk</em> 的运行环境。<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line">a = <span class="number">5</span></span><br><span class="line"><span class="built_in">print</span>(a)</span><br><span class="line"><span class="comment">-- 真实的变量访问</span></span><br><span class="line"><span class="built_in">_ENV</span>.a = <span class="number">5</span></span><br><span class="line"><span class="built_in">_ENV</span>.<span class="built_in">print</span>(<span class="built_in">_ENV</span>.a)</span><br></pre></td></tr></table></figure>
+可通过如下代码查看 <em>lua</em> 默认 <em>upvalue</em>：<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> k, v <span class="keyword">in</span> <span class="built_in">pairs</span>(<span class="built_in">_ENV</span>) <span class="keyword">do</span></span><br><span class="line">  <span class="built_in">print</span>(k, v)</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+执行上述代码后，可看到熟悉的名称，如：<em>package、math、string、print、pairs</em> 等。可以看出，有了 <code>_ENV</code> 的支持，才能简洁无障碍的使用这些系统 <em>module</em> 和 <em>function</em>。</li>
+<li><h4 id="可控环境-ENV"><a href="#可控环境-ENV" class="headerlink" title="可控环境 _ENV"></a>可控环境 <code>_ENV</code></h4><em>chunk</em> 运行依赖 <code>_ENV</code>，通过 <code>_ENV</code> 设置可实现 <em>lua</em> 运行环境的隔离和修改。<br>改变默认 <code>_ENV</code> 成员，裁减、增加或修改所需的 <em>module</em> 或 <em>function*，改变 *chunk</em> 级别的运行环境，如：<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line"><span class="comment">-- 删除 dofile 函数</span></span><br><span class="line"><span class="built_in">dofile</span> = <span class="literal">nil</span></span><br><span class="line"><span class="built_in">_ENV</span>.<span class="built_in">dofile</span> = <span class="literal">nil</span></span><br><span class="line"><span class="comment">-- 增加自定义模块</span></span><br><span class="line">mymodule = <span class="built_in">require</span>(<span class="string">"modulename"</span>)</span><br><span class="line"><span class="built_in">_ENV</span>.mymodule = <span class="built_in">_ENV</span>.<span class="built_in">require</span>(<span class="string">"modulename"</span>)</span><br><span class="line"><span class="comment">-- 修改 print 函数</span></span><br><span class="line"><span class="built_in">print</span> = <span class="function"><span class="keyword">function</span><span class="params">()</span></span> <span class="comment">--[[your code]]</span> <span class="keyword">end</span></span><br><span class="line"><span class="built_in">_ENV</span>.<span class="built_in">print</span> = <span class="function"><span class="keyword">function</span><span class="params">()</span></span> <span class="comment">--[[your code]]</span> <span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 也可进行整体替换</span></span><br><span class="line"><span class="built_in">_ENV</span> = &#123;<span class="built_in">print</span> = <span class="built_in">print</span>&#125; <span class="comment">-- 该环境只支持 print 函数</span></span><br></pre></td></tr></table></figure>
+创建局部变量 <code>_ENV</code>，改变 <em>block</em> 级别的运行环境，如：<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line"><span class="keyword">do</span></span><br><span class="line">  <span class="comment">-- _ENV 仅在此 block 有效</span></span><br><span class="line">  <span class="keyword">local</span> <span class="built_in">_ENV</span> = &#123;...&#125;</span><br><span class="line">  ...</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line">  </span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">f</span><span class="params">(para, _ENV)</span></span></span><br><span class="line">  <span class="comment">-- 以函数参数形式使用 _ENV</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">f</span><span class="params">(para)</span></span></span><br><span class="line">  <span class="comment">-- 以局部变量的形式使用 _ENV</span></span><br><span class="line">  <span class="keyword">local</span> <span class="built_in">_ENV</span> = &#123;...&#125;</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure></li>
+<li><h4 id="free-name-传导和-ENV-G-成员"><a href="#free-name-传导和-ENV-G-成员" class="headerlink" title="free name 传导和 _ENV._G 成员"></a><em>free name</em> 传导和 <code>_ENV._G</code> 成员</h4><em>lua</em> 运行时，默认 <em>upvalue</em> 会因 <em>free name</em> 的创建而发生改变，而这种改变将传导至下一次的 <em>upvalue</em> 使用，从而出现全局变量的效果。如：<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line"><span class="comment">-- chunk1 c1.lua</span></span><br><span class="line">a = <span class="number">5</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- chunk2 c2.lua</span></span><br><span class="line"><span class="built_in">print</span>(a) </span><br><span class="line"></span><br><span class="line"><span class="comment">-- chunk3 c3.lua</span></span><br><span class="line"><span class="built_in">dofile</span>(<span class="string">"c1.lua"</span>) <span class="comment">-- 执行 chunk1，遇到 free name：a，创建 upvalue.a，upvalue.a = 5</span></span><br><span class="line"><span class="built_in">print</span>(a) <span class="comment">-- upvalue 已被 chunk1 改变，upvalue.a 值为 5</span></span><br><span class="line"><span class="built_in">dofile</span>(<span class="string">"c2.lua"</span>) <span class="comment">-- upvalue 传导至 chunk2，获取 upvalue.a</span></span><br></pre></td></tr></table></figure>
+从执行效果看，以 <em>upvalue</em> 为桥梁，<em>free name</em> 的使用会出现全局变量的效果。<br><em>lua</em> 默认 <code>_ENV</code> 包含 <code>_ENV._G</code> 成员，而 <code>_ENV._G</code> 的值为默认 <em>upvalue*，即 <code>_ENV == _ENV._G</code>，因此，可以通过 <code>_G.x</code> 来引用“全局变量” <code>x</code>。<br>需要注意的是，无节制的使用 *free name</em> 将导致 <em>upvalue</em> 的成员过多，影响 <em>upvalue</em> 传导时的效率。实际编程过程中，可使用 <code>_G</code> 来明确全局变量的使用，本地使用的变量一律用 <code>local</code> 来修饰，如：<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line"><span class="keyword">local</span> a = <span class="number">5</span> <span class="comment">-- 局部变量 a</span></span><br><span class="line"><span class="keyword">local</span> b = <span class="number">6</span> <span class="comment">-- 局部变量 b</span></span><br><span class="line"><span class="built_in">_G</span>.c = <span class="number">20</span> <span class="comment">-- 显式使用全局变量 c</span></span><br></pre></td></tr></table></figure>
+此外，如果 <code>_ENV</code> 的值发生改变，<code>_ENV._G</code> 可能不存在，因此，在改变 <code>_ENV</code> 之前，可事先保存 <code>_ENV</code> 或者 <code>_ENV._G</code>，如：<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line"><span class="keyword">local</span> g = <span class="built_in">_G</span> <span class="comment">-- _ENV 未改变，保存 _G 至局部变量 g</span></span><br><span class="line"><span class="built_in">_ENV</span> = &#123;<span class="built_in">print</span> = <span class="built_in">print</span>, a = <span class="string">"hello"</span>&#125; <span class="comment">-- 新 _ENV 只包含两个成员：_ENV.print 和 _ENV.a</span></span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><h3 id="结束语"><a href="#结束语" class="headerlink" title="结束语"></a>结束语</h3><em>lua</em> 局部变量的作用范围是 <em>block*。<br>变量 <code>_ENV</code> 由 *lua compiler</em> 在执行 <em>chunk</em> 前创建，可理解为该 <em>chunk</em> 的局部变量，<em>chunk</em> 内对 <em>free name</em> 的访问被转换为对 <code>_ENV</code> 对应成员的访问。<code>ENV</code> 的默认值为 <em>upvalue*。<br>*lua</em> 没有全局变量，<em>lua</em> 通过 <em>upvalue</em> 和 <code>_ENV</code> 实现全局变量的效果。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/lua/" rel="tag"># lua</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2017/20171107-02.html" rel="prev" title="lua module 和 package 小结">
+      <i class="fa fa-chevron-left"></i> lua module 和 package 小结
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/20200724-01.html" rel="next" title="重拾hexo+next">
+      重拾hexo+next <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+        </div>
+        
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Django</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

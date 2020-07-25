@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  
+  <link rel="stylesheet" href="/lib/animate-css/animate.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.geeky.win","root":"/","scheme":"Gemini","version":"8.0.0-rc.4","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}}};
+  </script>
+
+  <meta name="description" content="使用微软的 visual studio 2013 编译 c&#x2F;c++ 项目时，出现一些难以排查的问题，现进行总结，避免再走弯路。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Visual Studio 2013 编译 c&#x2F;c++ 问题汇总">
+<meta property="og:url" content="https://blog.geeky.win/2017/20170921-01.html">
+<meta property="og:site_name" content="Simple Mind">
+<meta property="og:description" content="使用微软的 visual studio 2013 编译 c&#x2F;c++ 项目时，出现一些难以排查的问题，现进行总结，避免再走弯路。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://qdkbsulxk.bkt.clouddn.com/201709/20170921p01.PNG">
+<meta property="og:image" content="http://qdkbsulxk.bkt.clouddn.com/201709/20170921p02.PNG">
+<meta property="og:image" content="http://qdkbsulxk.bkt.clouddn.com/201709/20170921p03.PNG">
+<meta property="og:image" content="http://qdkbsulxk.bkt.clouddn.com/201709/20170921p04.PNG">
+<meta property="article:published_time" content="2017-09-21T13:10:59.000Z">
+<meta property="article:modified_time" content="2020-07-23T06:44:52.408Z">
+<meta property="article:author" content="Django">
+<meta property="article:tag" content="windows">
+<meta property="article:tag" content="visual studio">
+<meta property="article:tag" content="c&#x2F;c++">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://qdkbsulxk.bkt.clouddn.com/201709/20170921p01.PNG">
+
+<link rel="canonical" href="https://blog.geeky.win/2017/20170921-01.html">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>Visual Studio 2013 编译 c/c++ 问题汇总 | Simple Mind</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <main class="main">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+        <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Simple Mind</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">Hello world!</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-首页">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-日常">
+
+    <a href="/categories/daily/" rel="section"><i class="fas fa-calendar-alt fa-fw"></i>日常</a>
+
+  </li>
+        <li class="menu-item menu-item-归纳">
+
+    <a href="/categories/conclusion/" rel="section"><i class="fas fa-cogs fa-fw"></i>归纳</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <section class="post-toc-wrap sidebar-panel">
+          <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#环境说明"><span class="nav-number">1.</span> <span class="nav-text">环境说明</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Solution-配置页面与当前使用的-Solution-配置不一致"><span class="nav-number">2.</span> <span class="nav-text">Solution 配置页面与当前使用的 Solution 配置不一致</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#未正确配置-windows-sdk-的-include-路径"><span class="nav-number">3.</span> <span class="nav-text">未正确配置 windows sdk 的 include 路径</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#未正确配置-windows-sdk-的库目录"><span class="nav-number">4.</span> <span class="nav-text">未正确配置 windows sdk 的库目录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#未正确配置可执行文件目录"><span class="nav-number">5.</span> <span class="nav-text">未正确配置可执行文件目录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#可执行文件平台与编译目标平台不一致"><span class="nav-number">6.</span> <span class="nav-text">可执行文件平台与编译目标平台不一致</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#写在最后"><span class="nav-number">7.</span> <span class="nav-text">写在最后</span></a></li></ol></div>
+      </section>
+      <!--/noindex-->
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Django</p>
+  <div class="site-description" itemprop="description">A blog of nobody.</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">20</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+<div class="links-of-author animated">
+  <span class="links-of-author-item">
+    <img src="/images/rhca.png" alt="p2" width="70%" title="Red Hat Certified Architect in Infrastructure">
+    <a href='https://rhtapps.redhat.com/certifications/badge/verify/LRFJG4NEZN63FA65BCHVXX2KMAAEQU3CUPSQX2KSDXT6RW46LQ3T4V2LT2DQFPHMZNIKSLKTIWLQQ4U5NQYTCNA62RUWOCM34WWBUYQ='  title="Red Hat Certified Architect in Infrastructure" rel="noopener" target="_blank">RHCA</a>
+  </span>
+  <span class="links-of-author-item">
+    <img src="/images/rhce.png" alt="p2" width="70%" title="Red Hat Certified Engineer">
+    <a href='https://rhtapps.redhat.com/certifications/badge/verify/LRFJG4NEZN63FA65BCHVXX2KMAAEQU3CUPSQX2KSDXT6RW46LQ3XCZJWRJNV7ILTXVE4I6VB7OTCG4U5NQYTCNA62RUWOCM34WWBUYQ='  title="Red Hat Certified Engineer" rel="noopener" target="_blank">RHCE</a>
+  </span>
+  <span class="links-of-author-item">
+    <img src="/images/oci-cer.png" alt="p2" width="70%" title="OCI Developer Associate">
+    <a href='https://www.youracclaim.com/badges/7900cd96-5c33-49cf-8368-0397a8070048/public_url'  title="OCI Developer Associate" rel="noopener" target="_blank">OCI Developer Associate</a>
+  </span>
+  <span class="links-of-author-item">
+    <img src="/images/oci-cer.png" alt="p2" width="70%" title="OCI Foundation Associate">
+    <a href='https://www.youracclaim.com/badges/7900cd96-5c33-49cf-8368-0397a8070048/public_url' title="OCI Foundation Associate" rel="noopener" target="_blank">OCI Foundation Associate</a>
+  </span>
+</div>
+      </section>
+        <div class="back-to-top animated">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </header>
+
+      
+
+<noscript>
+  <div id="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+      <div class="main-inner">
+        
+
+        <div class="content post posts-expand">
+          
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://blog.geeky.win/2017/20170921-01.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Django">
+      <meta itemprop="description" content="A blog of nobody.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Simple Mind">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Visual Studio 2013 编译 c/c++ 问题汇总
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-09-21 21:10:59" itemprop="dateCreated datePublished" datetime="2017-09-21T21:10:59+08:00">2017-09-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-07-23 14:44:52" itemprop="dateModified" datetime="2020-07-23T14:44:52+08:00">2020-07-23</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%BD%AF%E4%BB%B6%E2%80%A2%E7%8E%AF%E5%A2%83%E2%80%A2%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">软件•环境•工具</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>使用微软的 visual studio 2013 编译 c/c++ 项目时，出现一些难以排查的问题，现进行总结，避免再走弯路。</p>
+</blockquote>
+<a id="more"></a>
+<ul>
+<li><h3 id="环境说明"><a href="#环境说明" class="headerlink" title="环境说明"></a>环境说明</h3>操作系统：windows7 x64<br>集成环境：visual studio 2013<br>编译目标：windows 32/64 位控制台程序、静态链接库lib、动态链接库dll</li>
+<li><h3 id="Solution-配置页面与当前使用的-Solution-配置不一致"><a href="#Solution-配置页面与当前使用的-Solution-配置不一致" class="headerlink" title="Solution 配置页面与当前使用的 Solution 配置不一致"></a>Solution 配置页面与当前使用的 Solution 配置不一致</h3>在 <em>解决方案</em> 或 <em>项目</em> 名称上点右键，选择 <em>属性</em> 后，如图所示：<br><img src="http://qdkbsulxk.bkt.clouddn.com/201709/20170921p01.PNG" alt="p1" title="配置页面不一致"><br>在配置页面修改的配置不一定是当前使用的配置，造成配置未生效的错觉。</li>
+<li><h3 id="未正确配置-windows-sdk-的-include-路径"><a href="#未正确配置-windows-sdk-的-include-路径" class="headerlink" title="未正确配置 windows sdk 的 include 路径"></a>未正确配置 windows sdk 的 include 路径</h3>当源代码使用 操作系统 相关的头文件时，提示找不到，如 windows.h。需手动配置包含目录</li>
+</ul>
+<p><em>配置属性-VC++目录-包含目录</em> 或 <em>配置属性-c/c++-附加包含目录</em></p>
+<ul>
+<li><h3 id="未正确配置-windows-sdk-的库目录"><a href="#未正确配置-windows-sdk-的库目录" class="headerlink" title="未正确配置 windows sdk 的库目录"></a>未正确配置 windows sdk 的库目录</h3>当编译 exe 文件或 dll 文件时，提示找不到 *.lib 文件，如 kernel32.lib。需手动配置库目录</li>
+</ul>
+<p><em>配置属性-VC++目录-库目录</em> 或 <em>配置属性-链接器-附加库目录</em></p>
+<ul>
+<li><h3 id="未正确配置可执行文件目录"><a href="#未正确配置可执行文件目录" class="headerlink" title="未正确配置可执行文件目录"></a>未正确配置可执行文件目录</h3>编译过程中，集成环境调用一系列可执行文件，提示无法运行 *.exe，如图所示<br><img src="http://qdkbsulxk.bkt.clouddn.com/201709/20170921p02.PNG" alt="p2" title="无法运行 *.exe"><br>查找该可执行文件的路径，在 <em>配置属性-VC++目录-可执行文件目录</em> 中添加该路径，或者在 windows 系统中修改 <em>PATH</em> 环境变量，如图所示<br><img src="http://qdkbsulxk.bkt.clouddn.com/201709/20170921p03.PNG" alt="p3" title="可执行文件目录设置"></li>
+<li><h3 id="可执行文件平台与编译目标平台不一致"><a href="#可执行文件平台与编译目标平台不一致" class="headerlink" title="可执行文件平台与编译目标平台不一致"></a>可执行文件平台与编译目标平台不一致</h3>编译过程中，集成环境调用一系列可执行文件，提示无法运行 *.exe，而设置可执行文件路径后，仍报同样错误。<br>以 rc.exe 为例，该文件存在 3 个不同平台版本，如图所示<br><img src="http://qdkbsulxk.bkt.clouddn.com/201709/20170921p04.PNG" alt="p4" title="rc.exe 的不同平台版本"><br>按照正常思维逻辑，编译 64 位目标应选择 x64 版本的 rc.exe，但仍提示无法运行 *.exe，而选择 x86 版本的 rc.exe，则编译通过。</li>
+<li><h3 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h3>关于最后一个问题，有网友提到通过修改 project 的配置文件可阻止集成环境调用 rc.exe，经测试，并非百分百可行。<br>在 windows10 x64，visual studio 2017 环境下，上述问题均未出现。<br>vs2013 的默认环境配置存在一定瑕疵，若使用该版本的集成环境编译c/c++源代码，需格外小心。若条件允许，还是使用 vs2017 。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/windows/" rel="tag"># windows</a>
+              <a href="/tags/visual-studio/" rel="tag"># visual studio</a>
+              <a href="/tags/c-c/" rel="tag"># c/c++</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2017/20170822-02.html" rel="prev" title="lede 添加 ssl 支持">
+      <i class="fa fa-chevron-left"></i> lede 添加 ssl 支持
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2017/20170929-02.html" rel="next" title="（连载）在 windows 中搭建 lua 应用环境（一）">
+      （连载）在 windows 中搭建 lua 应用环境（一） <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+        </div>
+        
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Django</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  
+  <link rel="stylesheet" href="/lib/animate-css/animate.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.geeky.win","root":"/","scheme":"Gemini","version":"8.0.0-rc.4","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}}};
+  </script>
+
+  <meta name="description" content="在编写 shell 脚本时，容易对重定向与管道的概念产生混淆。本文总结了一些关于在 shell 中运用重定向和管道的经验。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="在 shell 中使用重定向和管道">
+<meta property="og:url" content="https://blog.geeky.win/2017/20170718-04.html">
+<meta property="og:site_name" content="Simple Mind">
+<meta property="og:description" content="在编写 shell 脚本时，容易对重定向与管道的概念产生混淆。本文总结了一些关于在 shell 中运用重定向和管道的经验。">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2017-07-18T12:43:47.000Z">
+<meta property="article:modified_time" content="2020-07-23T06:44:50.739Z">
+<meta property="article:author" content="Django">
+<meta property="article:tag" content="linux">
+<meta property="article:tag" content="shell">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://blog.geeky.win/2017/20170718-04.html">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>在 shell 中使用重定向和管道 | Simple Mind</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <main class="main">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+        <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Simple Mind</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">Hello world!</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-首页">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-日常">
+
+    <a href="/categories/daily/" rel="section"><i class="fas fa-calendar-alt fa-fw"></i>日常</a>
+
+  </li>
+        <li class="menu-item menu-item-归纳">
+
+    <a href="/categories/conclusion/" rel="section"><i class="fas fa-cogs fa-fw"></i>归纳</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <section class="post-toc-wrap sidebar-panel">
+          <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#重定向"><span class="nav-number">1.</span> <span class="nav-text">重定向</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#输出重定向"><span class="nav-number">1.1.</span> <span class="nav-text">输出重定向</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#输入重定向"><span class="nav-number">1.2.</span> <span class="nav-text">输入重定向</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#小结"><span class="nav-number">1.3.</span> <span class="nav-text">小结</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#管道"><span class="nav-number">2.</span> <span class="nav-text">管道</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#区分重定向和管道"><span class="nav-number">3.</span> <span class="nav-text">区分重定向和管道</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#补充：用户自定义变量与标准输出"><span class="nav-number">4.</span> <span class="nav-text">补充：用户自定义变量与标准输出</span></a></li></ol></div>
+      </section>
+      <!--/noindex-->
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Django</p>
+  <div class="site-description" itemprop="description">A blog of nobody.</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">20</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+<div class="links-of-author animated">
+  <span class="links-of-author-item">
+    <img src="/images/rhca.png" alt="p2" width="70%" title="Red Hat Certified Architect in Infrastructure">
+    <a href='https://rhtapps.redhat.com/certifications/badge/verify/LRFJG4NEZN63FA65BCHVXX2KMAAEQU3CUPSQX2KSDXT6RW46LQ3T4V2LT2DQFPHMZNIKSLKTIWLQQ4U5NQYTCNA62RUWOCM34WWBUYQ='  title="Red Hat Certified Architect in Infrastructure" rel="noopener" target="_blank">RHCA</a>
+  </span>
+  <span class="links-of-author-item">
+    <img src="/images/rhce.png" alt="p2" width="70%" title="Red Hat Certified Engineer">
+    <a href='https://rhtapps.redhat.com/certifications/badge/verify/LRFJG4NEZN63FA65BCHVXX2KMAAEQU3CUPSQX2KSDXT6RW46LQ3XCZJWRJNV7ILTXVE4I6VB7OTCG4U5NQYTCNA62RUWOCM34WWBUYQ='  title="Red Hat Certified Engineer" rel="noopener" target="_blank">RHCE</a>
+  </span>
+  <span class="links-of-author-item">
+    <img src="/images/oci-cer.png" alt="p2" width="70%" title="OCI Developer Associate">
+    <a href='https://www.youracclaim.com/badges/7900cd96-5c33-49cf-8368-0397a8070048/public_url'  title="OCI Developer Associate" rel="noopener" target="_blank">OCI Developer Associate</a>
+  </span>
+  <span class="links-of-author-item">
+    <img src="/images/oci-cer.png" alt="p2" width="70%" title="OCI Foundation Associate">
+    <a href='https://www.youracclaim.com/badges/7900cd96-5c33-49cf-8368-0397a8070048/public_url' title="OCI Foundation Associate" rel="noopener" target="_blank">OCI Foundation Associate</a>
+  </span>
+</div>
+      </section>
+        <div class="back-to-top animated">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </header>
+
+      
+
+<noscript>
+  <div id="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+      <div class="main-inner">
+        
+
+        <div class="content post posts-expand">
+          
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://blog.geeky.win/2017/20170718-04.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Django">
+      <meta itemprop="description" content="A blog of nobody.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Simple Mind">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          在 shell 中使用重定向和管道
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-07-18 20:43:47" itemprop="dateCreated datePublished" datetime="2017-07-18T20:43:47+08:00">2017-07-18</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-07-23 14:44:50" itemprop="dateModified" datetime="2020-07-23T14:44:50+08:00">2020-07-23</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%BD%AF%E4%BB%B6%E2%80%A2%E7%8E%AF%E5%A2%83%E2%80%A2%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">软件•环境•工具</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>在编写 <em>shell</em> 脚本时，容易对重定向与管道的概念产生混淆。本文总结了一些关于在 <em>shell</em> 中运用重定向和管道的经验。</p>
+</blockquote>
+<a id="more"></a>
+<ul>
+<li><h3 id="重定向"><a href="#重定向" class="headerlink" title="重定向"></a>重定向</h3>重定向，即输入输出重定向。文章主要研究对象为 <em>linux</em> 标准输入、标准输出和标准错误输出，<em>linux</em> 定义了 <code>0、1、2</code> 三个文件描述符，分别对应标准输入、标准输出和标准错误输出。<ul>
+<li><h4 id="输出重定向"><a href="#输出重定向" class="headerlink" title="输出重定向"></a>输出重定向</h4></li>
+</ul>
+<strong>输出重定向符</strong><br><code>1&gt;</code> 标准输出重定向符，可简写为 <code>&gt;</code><br><code>2&gt;</code> 标准错误重定向符<br><code>&amp;&gt;</code> 标准输出与标准错误输出重定向符（在某些场合使用会出问题，如 <code>crontab</code>。尽量用 <code>cmd &gt; file 2&gt;&amp;1</code> 代替）<br><code>1&gt;&amp;2</code> 标准输出重定向至标准错误输出（作为整体理解）<br><code>2&gt;&amp;1</code> 标准错误输出重定向至标准输出（作为整体理解）<br><code>1&gt;&gt;</code> 标准输出重定向，追加<br><code>2&gt;&gt;</code> 标准错误输出重定向，追加<br><strong>重定向至文件</strong><br><code>&lt;linux shell command&gt; 输出重定向符 &lt;linux file&gt;</code>，如：  <pre><code class="shell">ls &gt; abc
+ls 2&gt; def</code></pre>
+<strong>文件描述符重定向</strong>  <pre><code class="shell">ls &gt; abc 2&gt;&amp;1
+tmp=`git status 2&gt;&amp;1`</code></pre>
+<ul>
+<li><h4 id="输入重定向"><a href="#输入重定向" class="headerlink" title="输入重定向"></a>输入重定向</h4><code>&lt;</code> <strong>标准输入重定向</strong><br><code>&lt;linux shell command&gt; 输入重定向符 &lt;linux file&gt;</code>，把 <em>linux</em> 文件内容作为 <em>shell</em> 命令的输入，如：  <pre><code class="shell">wc &lt; /etc/fstab</code></pre>
+<code>&lt;&lt;</code> <strong>分隔符控制输入重定向</strong>  <pre><code class="shell">&lt;linux shell command&gt; 分隔符控制输入重定向 分隔符
+输入内容1
+输入内容2
+输入内容3
+...
+分隔符</code></pre>
+分隔符之间的内容作为 <em>shell</em> 命令的输入  <pre><code class="shell">vi myfile &lt;&lt;abcdef
+i
+This is line 1
+This is line 2
+^[
+zz
+abcdef</code></pre>
+</li>
+<li><h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4>除文件描述符重定向、分隔符控制输入重定向外，其他重定向符的一端是 <em>shell</em> 命令，另一端是 <em>linux</em> 文件。要么是 <em>linux</em> 文件内容作为 <em>shell</em> 命令的输入，要么是 <em>linux</em> 文件存放 <em>shell</em> 命令的输出结果。<br>如果不使用重定向符，则 <em>shell</em> 命令的默认输入为标准输入：键盘； <em>shell</em> 命令的默认输出为标准输出：显示器。从 <em>linux</em> 操作系统角度，标准输入输出都是 <em>linux</em> 文件，把默认输入输出看成隐形的重定向，则隐形重定向符的一端仍是 <em>shell</em> 命令，另一端仍是 <em>linux</em> 文件。</li>
+</ul>
+</li>
+<li><h3 id="管道"><a href="#管道" class="headerlink" title="管道"></a>管道</h3><code>|</code> 管道符<br><code>&lt;linux shell command&gt; 管道符 &lt;linux shell command&gt;</code>，管道符连接两个 <em>shell</em> 命令，把前一个 <em>shell</em> 命令的标准输出作为后一个 <em>shell</em> 命令的标准输入，如：  <pre><code class="shell">ls | wc
+cat /etc/fstab | wc</code></pre>
+</li>
+</ul>
+<p><strong>小结</strong>：使用管道时，管道符两端都是 <em>shell</em> 命令</p>
+<ul>
+<li><h3 id="区分重定向和管道"><a href="#区分重定向和管道" class="headerlink" title="区分重定向和管道"></a>区分重定向和管道</h3>简而言之，<strong><em>重定向</em></strong>在 <em>shell</em> 命令和 <em>linux</em> 文件之间起作用，<strong><em>管道</em></strong>在两个 <em>shell</em> 命令之间起作用<br>此外，管道的实现机制是 <em>linux</em> 的 IPC 机制，即进程间通信，使用管道时，系统会使用新的进程运行管道中的 <em>shell</em> 命令。因此，当前 <em>shell</em> 中的变量与管道中 <em>shell</em> 命令使用的变量存在于不同的进程环境中，管道中 <em>shell</em> 命令改变的变量不会影响当前 <em>shell</em> 中的变量</li>
+<li><h3 id="补充：用户自定义变量与标准输出"><a href="#补充：用户自定义变量与标准输出" class="headerlink" title="补充：用户自定义变量与标准输出"></a>补充：用户自定义变量与标准输出</h3></li>
+</ul>
+<p><em>shell</em> 命令的 <strong><em>标准输出</em></strong> 可给用户自定义变量赋值，但 <strong><em>标准错误输出</em></strong> 不能直接给用户自定义变量赋值  </p>
+<pre><code class="shell">a=`ls`
+echo &quot;$a&quot;</code></pre>
+<p>几个例子：<br><strong>获取 <em>git</em> 的执行结果（1）</strong>  </p>
+<pre><code class="shell">a=`git status -s`
+echo $?
+echo $a</code></pre>
+<p>如果第一行命令执行出错，<strong><em>标准错误输出</em></strong> 将在屏幕上显示错误信息，但 <code>a</code> 的值为空，因为 <code>a</code> 没有从 <strong><em>标准输出</em></strong> 获取到任何内容<br><strong>获取 <em>git</em> 的执行结果（2）</strong></p>
+<pre><code class="shell">a=`git status -s 2&gt;&amp;1`
+echo $?
+echo $a</code></pre>
+<p>第一行命令把 <strong><em>标准错误输出</em></strong> 重定向至 <strong><em>标准输出</em></strong>，此时 <code>a</code> 能够获取 <em>git</em> 执行结果的报错信息<br><strong>获取 <em>git</em> 的执行结果（3）</strong></p>
+<pre><code class="shell">a=`git status -s 2&gt;/dev/null`
+echo $?
+echo $a</code></pre>
+<p>第一行命令把 <strong><em>标准错误输出</em></strong> 重定向至 <code>/dev/null</code>，屏幕上将不会出现任何报错信息，<code>a</code> 仍从 <strong><em>标准输出</em></strong> 获取 <em>git</em> 的执行结果</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/linux/" rel="tag"># linux</a>
+              <a href="/tags/shell/" rel="tag"># shell</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2017/20170718-03.html" rel="prev" title="Git Push without user interaction">
+      <i class="fa fa-chevron-left"></i> Git Push without user interaction
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2017/20170808-01.html" rel="next" title="grep 的 matcher 说明">
+      grep 的 matcher 说明 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+        </div>
+        
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Django</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

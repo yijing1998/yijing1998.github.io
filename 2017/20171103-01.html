@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  
+  <link rel="stylesheet" href="/lib/animate-css/animate.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.geeky.win","root":"/","scheme":"Gemini","version":"8.0.0-rc.4","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}}};
+  </script>
+
+  <meta name="description" content="table 是 lua 的重要数据类型，lua 本身的很多特性都与 table 相关，如 lua 运行时的环境参数、lua 的 module 和 package 等。借助 metatable*，可使 *lua 具备面向对象的部分特性，提供诸如 class&#x2F;object、inheritance 等功能，使 lua 能够胜任更多的应用场合。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="lua 环境下基于 metatable 的 table 行为总结">
+<meta property="og:url" content="https://blog.geeky.win/2017/20171103-01.html">
+<meta property="og:site_name" content="Simple Mind">
+<meta property="og:description" content="table 是 lua 的重要数据类型，lua 本身的很多特性都与 table 相关，如 lua 运行时的环境参数、lua 的 module 和 package 等。借助 metatable*，可使 *lua 具备面向对象的部分特性，提供诸如 class&#x2F;object、inheritance 等功能，使 lua 能够胜任更多的应用场合。">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2017-11-03T12:16:05.000Z">
+<meta property="article:modified_time" content="2020-07-23T06:44:57.986Z">
+<meta property="article:author" content="Django">
+<meta property="article:tag" content="lua">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://blog.geeky.win/2017/20171103-01.html">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>lua 环境下基于 metatable 的 table 行为总结 | Simple Mind</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <main class="main">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+        <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Simple Mind</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">Hello world!</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-首页">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-日常">
+
+    <a href="/categories/daily/" rel="section"><i class="fas fa-calendar-alt fa-fw"></i>日常</a>
+
+  </li>
+        <li class="menu-item menu-item-归纳">
+
+    <a href="/categories/conclusion/" rel="section"><i class="fas fa-cogs fa-fw"></i>归纳</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <section class="post-toc-wrap sidebar-panel">
+          <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#table-基础"><span class="nav-number">1.</span> <span class="nav-text">table 基础</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#table-的-metatable-的成员"><span class="nav-number">2.</span> <span class="nav-text">table 的 metatable 的成员</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#metamethod-分类一：运算符重定义"><span class="nav-number">2.1.</span> <span class="nav-text">metamethod 分类一：运算符重定义</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#metamethod-分类二：系统库重定义"><span class="nav-number">2.2.</span> <span class="nav-text">metamethod 分类二：系统库重定义</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#metamethod-分类三：table-成员访问"><span class="nav-number">2.3.</span> <span class="nav-text">metamethod 分类三：table 成员访问</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#table-成员访问行为"><span class="nav-number">3.</span> <span class="nav-text">table 成员访问行为</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#读-table-成员"><span class="nav-number">3.1.</span> <span class="nav-text">读 table 成员</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#写-table-成员"><span class="nav-number">3.2.</span> <span class="nav-text">写 table 成员</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#行为传导"><span class="nav-number">3.3.</span> <span class="nav-text">行为传导</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#面向对象基础（读，链式传导的紧凑形式）"><span class="nav-number">3.4.</span> <span class="nav-text">面向对象基础（读，链式传导的紧凑形式）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#结束语"><span class="nav-number">4.</span> <span class="nav-text">结束语</span></a></li></ol></div>
+      </section>
+      <!--/noindex-->
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Django</p>
+  <div class="site-description" itemprop="description">A blog of nobody.</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">20</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+<div class="links-of-author animated">
+  <span class="links-of-author-item">
+    <img src="/images/rhca.png" alt="p2" width="70%" title="Red Hat Certified Architect in Infrastructure">
+    <a href='https://rhtapps.redhat.com/certifications/badge/verify/LRFJG4NEZN63FA65BCHVXX2KMAAEQU3CUPSQX2KSDXT6RW46LQ3T4V2LT2DQFPHMZNIKSLKTIWLQQ4U5NQYTCNA62RUWOCM34WWBUYQ='  title="Red Hat Certified Architect in Infrastructure" rel="noopener" target="_blank">RHCA</a>
+  </span>
+  <span class="links-of-author-item">
+    <img src="/images/rhce.png" alt="p2" width="70%" title="Red Hat Certified Engineer">
+    <a href='https://rhtapps.redhat.com/certifications/badge/verify/LRFJG4NEZN63FA65BCHVXX2KMAAEQU3CUPSQX2KSDXT6RW46LQ3XCZJWRJNV7ILTXVE4I6VB7OTCG4U5NQYTCNA62RUWOCM34WWBUYQ='  title="Red Hat Certified Engineer" rel="noopener" target="_blank">RHCE</a>
+  </span>
+  <span class="links-of-author-item">
+    <img src="/images/oci-cer.png" alt="p2" width="70%" title="OCI Developer Associate">
+    <a href='https://www.youracclaim.com/badges/7900cd96-5c33-49cf-8368-0397a8070048/public_url'  title="OCI Developer Associate" rel="noopener" target="_blank">OCI Developer Associate</a>
+  </span>
+  <span class="links-of-author-item">
+    <img src="/images/oci-cer.png" alt="p2" width="70%" title="OCI Foundation Associate">
+    <a href='https://www.youracclaim.com/badges/7900cd96-5c33-49cf-8368-0397a8070048/public_url' title="OCI Foundation Associate" rel="noopener" target="_blank">OCI Foundation Associate</a>
+  </span>
+</div>
+      </section>
+        <div class="back-to-top animated">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </header>
+
+      
+
+<noscript>
+  <div id="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+      <div class="main-inner">
+        
+
+        <div class="content post posts-expand">
+          
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://blog.geeky.win/2017/20171103-01.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Django">
+      <meta itemprop="description" content="A blog of nobody.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Simple Mind">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          lua 环境下基于 metatable 的 table 行为总结
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-11-03 20:16:05" itemprop="dateCreated datePublished" datetime="2017-11-03T20:16:05+08:00">2017-11-03</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-07-23 14:44:57" itemprop="dateModified" datetime="2020-07-23T14:44:57+08:00">2020-07-23</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%BD%AF%E4%BB%B6%E2%80%A2%E7%8E%AF%E5%A2%83%E2%80%A2%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">软件•环境•工具</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p><em>table</em> 是 <em>lua</em> 的重要数据类型，<em>lua</em> 本身的很多特性都与 <em>table</em> 相关，如 <em>lua</em> 运行时的环境参数、<em>lua</em> 的 <em>module</em> 和 <em>package</em> 等。借助 <em>metatable*，可使 *lua</em> 具备面向对象的部分特性，提供诸如 <em>class/object<em>、</em>inheritance</em> 等功能，使 <em>lua</em> 能够胜任更多的应用场合。</p>
+</blockquote>
+<a id="more"></a>
+<ul>
+<li><h3 id="table-基础"><a href="#table-基础" class="headerlink" title="table 基础"></a><em>table</em> 基础</h3><em>lua</em> <em>table</em> 有两种表现形式，一是数组形式，二是 <em>(key, value)</em> 键值对形式，如下所示<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line"><span class="comment">-- 数组形式的 table: t1</span></span><br><span class="line">t1 = &#123;&#125;</span><br><span class="line">t1[<span class="number">1</span>] = <span class="number">1</span></span><br><span class="line">t1[<span class="number">2</span>] = <span class="number">2</span></span><br><span class="line">t1[<span class="number">3</span>] = <span class="number">3</span></span><br><span class="line"><span class="comment">-- 键值对形式的 table: t2</span></span><br><span class="line">t2 = &#123;&#125;</span><br><span class="line">t2[<span class="string">"k1"</span>] = <span class="string">"hello"</span></span><br><span class="line">t2[<span class="string">"k2"</span>] = <span class="string">"world"</span></span><br></pre></td></tr></table></figure>
+键值对 <em>(key, value)</em> 中，<em>key</em> 可以是任意 <em>lua</em> 数据类型，因此数组形式的 <em>table</em> 可理解为该 <em>table</em> 的 <em>key</em> 是一连串从1开始的连续的整型数字。<em>(key, value)</em> 是 <em>table</em> 一般表现形式。<br>虽然 <em>key</em> 可以是任意 <em>lua</em> 数据类型，但针对不同数据类型的 <em>key<em>，</em>lua</em> 环境提供了一些操作特性。<br>当 <em>key</em> 是从 1 开始的连续整型数字时，<code>#t1</code> 可获取 <em>t1</em> 内成员的数量，否则 <code>#t1</code> 的值为 0。<br>当 <em>key</em> 是字符串时，可通过点 <em>.</em> 操作符来获取或设置该键所对应的值，如下所示<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line">t2 = &#123;&#125;</span><br><span class="line">t2[<span class="string">"k1"</span>] = <span class="string">"hello"</span></span><br><span class="line">t2.k2 = <span class="string">"world"</span></span><br><span class="line"><span class="built_in">print</span>(t2.k1, t2.k2)</span><br></pre></td></tr></table></figure>
+最后，不要忽略 <em>key</em> 可以是任意 <em>lua</em> 数据类型的特性。在程序设计时，可能需要某些 <em>object</em> 作为 <em>key</em></li>
+<li><h3 id="table-的-metatable-的成员"><a href="#table-的-metatable-的成员" class="headerlink" title="table 的 metatable 的成员"></a><em>table</em> 的 <em>metatable</em> 的成员</h3><em>metatable</em> 也是普通的 <em>lua</em> <em>table*，当 *metatable</em> 设置了特定的成员后，它将决定某些 <em>table</em> 的行为，前提是这些 <em>table</em> 设置了该 <em>metatable<em>。<br>默认情况下，</em>table</em> 的 <em>metatable</em> 为 <em>nil*，获取/设置 *metatable</em> 的方法如下所示<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line">t = &#123;&#125;</span><br><span class="line">m = &#123;&#125;</span><br><span class="line"><span class="built_in">getmetatable</span>(t) <span class="comment">-- return nil</span></span><br><span class="line"><span class="built_in">setmetatable</span>(t, m) <span class="comment">-- set m as t's metatable</span></span><br></pre></td></tr></table></figure>
+<em>metatable</em> 的成员被称为 <em>metamethod*，在操作 *table</em> 时，<em>lua</em> 会检查对应的 <em>metatable</em> 以及该 <em>metatable</em> 所包含的 <em>metamethod*，当条件满足时，调用 *metamethod</em> 完成相应操作。<br>按功能划分，<em>metamethod</em> 可分为三类，一类负责运算符重定义，一类负责系统库函数重定义，一类负责 <em>table</em> 成员的访问。<ul>
+<li><h4 id="metamethod-分类一：运算符重定义"><a href="#metamethod-分类一：运算符重定义" class="headerlink" title="metamethod 分类一：运算符重定义"></a><em>metamethod</em> 分类一：运算符重定义</h4>此类 <em>metathod</em> 类似于 <em>c++</em> 的运算符重载，使用加减乘除等运算符来替代函数调用，简化代码编写。<br>可重定义的运算符包括算术运算符，如数字运算：加、减、乘、除，位运算：按位取反、按位与、左移等；还包括逻辑运算，如大于、等于、小于、不等于等。<br>示例代码如下所示：<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line">m = &#123;&#125;</span><br><span class="line"><span class="comment">-- 重定义逻辑运算：&lt; (小于)</span></span><br><span class="line">m.<span class="built_in">__lt</span> = <span class="function"><span class="keyword">function</span><span class="params">(a, b)</span></span></span><br><span class="line">  <span class="keyword">return</span> a.v &lt; b.v</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line">t1 = &#123; v = <span class="number">20</span> &#125;</span><br><span class="line">t2 = &#123; v = <span class="number">5</span> &#125;</span><br><span class="line"><span class="built_in">setmetatable</span>(t1, m)</span><br><span class="line"><span class="built_in">setmetatable</span>(t2, m)</span><br><span class="line">res = t1 &lt; t1 <span class="comment">-- res 值为 false</span></span><br></pre></td></tr></table></figure></li>
+<li><h4 id="metamethod-分类二：系统库重定义"><a href="#metamethod-分类二：系统库重定义" class="headerlink" title="metamethod 分类二：系统库重定义"></a><em>metamethod</em> 分类二：系统库重定义</h4>目前 <em>lua</em> 提供三个系统库的重定义，分别是 <code>__tostring</code>、<code>__pairs</code> 和 <code>__metatable</code>。<br><code>__tostring</code>：如果 <code>print(t)</code> 中 <em>t</em> 的 <em>metatable</em> 定义了 <code>__tostring</code>，则 <code>print</code> 函数将自动调用 <code>__tostring</code>。<br><code>__pairs</code>：如果 <code>for k, v in pairs(t) do</code> 中 <em>t</em> 的 <em>metatable</em> 定义了 <code>__pairs</code>，则 <code>pairs</code> 函数自动调用 <code>__pairs</code>。<br><code>__metatable</code>：供 <code>getmetatable</code> 和 <code>setmetatable</code> 函数使用。调用 <code>getmetatable(t)</code> 函数，如果 <em>t</em> 的 <em>metatable</em> 定义了 <code>__metatable</code>，则返回 <code>__metatable</code> 的 <code>print</code> 结果。调用 <code>setmetatable(t, m)</code> 函数，如果 <em>t</em> 的 <em>metatable</em> 定义了 <code>__metatable</code>，则返回报错信息，提示 <em>t</em> 的 <em>metatable</em> 不允许修改。<br>需要注意的是，<code>__pairs</code> 和 <code>__tostring</code> 必须定义成 <em>function</em> 类型，而 <code>__metatable</code> 可以是任意 <em>lua</em> 数据类型。</li>
+<li><h4 id="metamethod-分类三：table-成员访问"><a href="#metamethod-分类三：table-成员访问" class="headerlink" title="metamethod 分类三：table 成员访问"></a><em>metamethod</em> 分类三：<em>table</em> 成员访问</h4></li>
+</ul>
+<em>lua</em> 使用 <em>metatable</em> 的 <code>__index</code> 和 <code>__newindex</code> 控制 <em>table</em> 的成员访问。<br><code>__index</code> 负责 <em>table</em> 成员读，如 <code>print(t.a)</code> 将读取 <em>table</em> <em>t</em> 的成员 <em>a</em>。<br><code>__newindex</code> 负责 <em>table</em> 成员的写，如 <code>t.a = 3</code> 把 <em>table</em> <em>t</em> 的成员 <em>a</em> 设置为 3。注，<em>lua</em> 使用赋值来创建和删除 <em>table</em> 成员，如 <code>t.a = 3</code> 时，如果 <code>t.a</code> 不存在，则 <em>lua</em> 自动创建 <code>t.a</code> 并赋值；又如 <code>t.a = nil</code>，则 <em>lua</em> 自动删除 <code>t.a</code> 成员。<br>虽然称 <code>__index</code> 和 <code>__newindex</code> 为 <em>metamethod*，但是 <code>__index</code> 和 <code>__newindex</code> 可以是 *function</em> 类型，也可以是 <em>table</em> 类型。</li>
+<li><h3 id="table-成员访问行为"><a href="#table-成员访问行为" class="headerlink" title="table 成员访问行为"></a><em>table</em> 成员访问行为</h3><em>table</em> 成员访问行为分为 <em>table</em> 成员的读、写和行为传导。<ul>
+<li><h4 id="读-table-成员"><a href="#读-table-成员" class="headerlink" title="读 table 成员"></a>读 <em>table</em> 成员</h4>当 <em>table</em> 的 <em>metatable</em> 为 <code>nil</code> 或 <em>metatable</em> 的 <code>__index</code> 成员为 <code>nil</code> 时，将按照 <em>table</em> 成员的实际情况访问 <em>table</em> 的成员。如：<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line">t = &#123;&#125;</span><br><span class="line">t.a = <span class="string">"a"</span> <span class="comment">-- 写</span></span><br><span class="line"><span class="built_in">print</span>(t.a, t.b) <span class="comment">-- 读，t.a = "a", t.b = nil</span></span><br></pre></td></tr></table></figure>
+当 <em>table</em> 的 <em>metatable</em> 的 <code>__index</code> 值为 <em>function</em> 时，并且读取的 <em>table</em> 成员不存在时，<em>lua</em> 将自动调用 <code>__index</code> 所指向的函数。如：<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line">t1 = &#123;&#125;</span><br><span class="line">t1.a = <span class="number">5</span></span><br><span class="line">m = &#123;&#125;</span><br><span class="line">m.<span class="built_in">__index</span> = <span class="function"><span class="keyword">function</span><span class="params">(t, k)</span></span></span><br><span class="line">  <span class="built_in">print</span>(t, k)</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"><span class="built_in">setmetatable</span>(t1, m)</span><br><span class="line"><span class="built_in">print</span>(t1.a) <span class="comment">-- 读，t1.a 存在，不触发 __index，t1.a == 5</span></span><br><span class="line"><span class="built_in">print</span>(t1.b) <span class="comment">-- 读，t1.b 不存在，将调用 m.__index 所指向的函数</span></span><br></pre></td></tr></table></figure>
+注，<code>__index</code> 指向函数的声明形式为 <code>function(t, k)</code>，其中，<em>t</em> 为设置了该 <em>metatable</em> 的 <em>table<em>，</em>k</em> 为所需访问该 <em>table</em> 成员的名称，或理解为 <em>table （key, value）</em> 键值对中的 <em>key*，可通过 <code>t[k]</code> 引用。<br>当 *table t1</em> 的 <em>metatable</em> 的 <code>__index</code> 值为另一 <em>table<em>（设为 *x</em>） 时，并且读取的 *t1</em> 成员 <em>t1.b</em> 不存在时，<em>lua</em> 将自动查找 <em>x</em> 对应成员名称，并返回之，即 <code>x.b</code>。如：<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line"><span class="comment">-- metatable settings</span></span><br><span class="line">x = &#123;&#125;</span><br><span class="line">x.b = <span class="string">"hello"</span></span><br><span class="line">m = &#123;&#125;</span><br><span class="line">m.<span class="built_in">__index</span> = x</span><br><span class="line"><span class="comment">-- table settings</span></span><br><span class="line">t1 = &#123;&#125;</span><br><span class="line">t1.a = <span class="number">5</span></span><br><span class="line"><span class="built_in">setmetatable</span>(t1, m)</span><br><span class="line"><span class="built_in">print</span>(t1.a) <span class="comment">-- 读，t1.a 存在，不触发 __index，t1.a == 5</span></span><br><span class="line"><span class="built_in">print</span>(t1.b) <span class="comment">-- 读, t1.b 不存在，return value == x.b == "hello"</span></span><br><span class="line"><span class="built_in">print</span>(t1.c) <span class="comment">-- 读, t1.c 不存在，return value == x.c == nil</span></span><br><span class="line"><span class="keyword">for</span> k, v <span class="keyword">in</span> <span class="built_in">pairs</span>(t1) <span class="keyword">do</span></span><br><span class="line">  <span class="built_in">print</span>(k, v)</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"><span class="comment">-- result: a    5</span></span><br></pre></td></tr></table></figure>
+<code>rawget</code> 函数的使用。当读取 <em>table t1</em> 成员 <code>t1.a</code> 时，无论采取 <code>t1.a</code> 或 <code>t1[&quot;a&quot;]</code> 形式，都会触发 <em>metatable</em> 的 <code>__index</code> 机制。有些场合不需要该机制（或者说不能使用该机制），此时 <code>rawget</code> 将派上用场。<code>rawget(t1, &quot;a&quot;)</code> 将获取 <code>t1.a</code> 但不触发 <code>__index</code>。如：<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line">m = &#123;&#125;</span><br><span class="line">m.<span class="built_in">__index</span> = <span class="function"><span class="keyword">function</span><span class="params">(t, k)</span></span></span><br><span class="line">  <span class="keyword">return</span> t[k] <span class="comment">-- 此方式触发 t 的 metatable 的 __index 机制，会出现死循环</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line">t1 = &#123;&#125;</span><br><span class="line"><span class="built_in">setmetatable</span>(t1, m)</span><br><span class="line"><span class="built_in">print</span>(t1.a) <span class="comment">-- stdin:2: C stack overflow</span></span><br></pre></td></tr></table></figure>
+正确做法是：<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line">m = &#123;&#125;</span><br><span class="line">m.<span class="built_in">__index</span> = <span class="function"><span class="keyword">function</span><span class="params">(t, k)</span></span></span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">rawget</span>(t, k) <span class="comment">-- rawget 单纯读取 t1.a，不会触发 t 的 metatable 的 __index 机制</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line">t1 = &#123;&#125;</span><br><span class="line"><span class="built_in">setmetatable</span>(t1, m)</span><br><span class="line"><span class="built_in">print</span>(t1.a)</span><br></pre></td></tr></table></figure></li>
+<li><h4 id="写-table-成员"><a href="#写-table-成员" class="headerlink" title="写 table 成员"></a>写 <em>table</em> 成员</h4>当 <em>table</em> 的 <em>metatable</em> 为 <code>nil</code> 或 <em>metatable</em> 的 <code>__newindex</code> 成员为 <code>nil</code> 时，将按照 <em>table</em> 成员的实际情况访问 <em>table</em> 的成员。如：<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line">t = &#123;&#125;</span><br><span class="line">t.a = <span class="string">"a"</span> <span class="comment">-- 写</span></span><br><span class="line"><span class="built_in">print</span>(t.a, t.b) <span class="comment">-- 读，t.a = "a", t.b = nil</span></span><br></pre></td></tr></table></figure>
+当 <em>table</em> 的 <em>metatable</em> 的 <code>__newindex</code> 值为 <em>function</em> 时，并且访问的 <em>table</em> 成员不存在时，<em>lua</em> 将自动调用 <code>__newindex</code> 所指向的函数。如：<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line">t1 = &#123;&#125;</span><br><span class="line">t1.a = <span class="number">5</span> <span class="comment">-- 写，在设置 metatable 前 t1 的 metatable 为 nil，此时写不会触发 __newindex</span></span><br><span class="line">m = &#123;&#125;</span><br><span class="line">m.<span class="built_in">__newindex</span> = <span class="function"><span class="keyword">function</span><span class="params">(t, k, v)</span></span></span><br><span class="line">  <span class="built_in">print</span>(t, k, v) <span class="comment">-- 打印 t, k, v，并未做实际写，此时 t["k"] 值为 nil</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"><span class="built_in">setmetatable</span>(t1, m)</span><br><span class="line">t1.a = <span class="number">10</span> <span class="comment">-- 写，t1.a 存在，不触发 __newindex，t1.a == 10</span></span><br><span class="line">t1.b = <span class="string">"hello"</span> <span class="comment">-- 写，t1.b 不存在，将调用 m.__newindex 所指向的函数</span></span><br></pre></td></tr></table></figure>
+注，<code>__newindex</code> 指向函数的声明形式为 <code>function(t, k, v)</code>，其中，<em>t</em> 为设置了该 <em>metatable</em> 的 <em>table<em>，</em>k</em> 为所需访问该 <em>table</em> 成员的名称，<em>v</em> 为所需设置的值，或理解为 <em>table （key, value）</em> 键值对中的 <em>key</em> 和 <em>value*。<br>当 *table t1</em> 的 <em>metatable</em> 的 <code>__newindex</code> 值为另一 <em>table<em>（设为 *x</em>） 时，并且写入的 *t1</em> 成员 <em>t1.b</em> 不存在时，<em>lua</em> 将自动查找 <em>x</em> 对应成员名称，并写入之，即 <code>x.b=?</code>。如：<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line"><span class="comment">-- metatable settings</span></span><br><span class="line">x = &#123;&#125;</span><br><span class="line">x.b = <span class="string">"hello"</span></span><br><span class="line">m = &#123;&#125;</span><br><span class="line">m.<span class="built_in">__newindex</span> = x</span><br><span class="line"><span class="comment">-- table settings</span></span><br><span class="line">t1 = &#123;&#125;</span><br><span class="line">t1.a = <span class="number">5</span> <span class="comment">-- 写，在设置 metatable 前 t1 的 metatable 为 nil，此时写不会触发 __newindex</span></span><br><span class="line"><span class="built_in">setmetatable</span>(t1, m)</span><br><span class="line">t1.a = <span class="number">10</span> <span class="comment">-- 写，t1.a 存在，不触发 __newindex，t1.a == 10</span></span><br><span class="line">t1.b = <span class="string">"HELLO"</span> <span class="comment">-- 写, t1.b 不存在，写入x，x.b == "HELLO"</span></span><br><span class="line">t1.c = <span class="string">"world"</span> <span class="comment">-- 写，t1.c 不存在，写入x，x.c = "world"</span></span><br><span class="line"><span class="built_in">print</span>(t1.c) <span class="comment">-- 读，return value == x.c == nil, t1.c 不存在</span></span><br><span class="line"><span class="keyword">for</span> k, v <span class="keyword">in</span> <span class="built_in">pairs</span>(t1) <span class="keyword">do</span></span><br><span class="line">  <span class="built_in">print</span>(k, v)</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"><span class="comment">-- result: a    10</span></span><br><span class="line"><span class="keyword">for</span> k, v <span class="keyword">in</span> paris(x) <span class="keyword">do</span></span><br><span class="line">  <span class="built_in">print</span>(k, v)</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"><span class="comment">-- result: b    HELLO</span></span><br><span class="line"><span class="comment">--         c    world</span></span><br></pre></td></tr></table></figure>
+<code>rawset</code> 函数的使用。当写入 <em>table t1</em> 成员 <code>t1.a</code> 时，无论采取 <code>t1.a=?</code> 或 <code>t1[&quot;a&quot;]=?</code> 形式，都会触发 <em>metatable</em> 的 <code>__newindex</code> 机制。有些场合不需要该机制（或者说不能使用该机制），此时 <code>rawset</code> 将派上用场。<code>rawset(t1, &quot;a&quot;, ?)</code> 将写入 <code>t1.a=?</code> 但不触发 <code>__newindex</code>。如：<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line">m = &#123;&#125;</span><br><span class="line">m.<span class="built_in">__newindex</span> = <span class="function"><span class="keyword">function</span><span class="params">(t, k, v)</span></span></span><br><span class="line">  t[k] = v <span class="comment">-- 此方式触发 t 的 metatable 的 __newindex 机制，会出现死循环</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line">t1 = &#123;&#125;</span><br><span class="line"><span class="built_in">setmetatable</span>(t1, m)</span><br><span class="line">t1.a = <span class="number">5</span> <span class="comment">-- stdin:2: C stack overflow</span></span><br></pre></td></tr></table></figure>
+正确做法是：<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line">m = &#123;&#125;</span><br><span class="line">m.<span class="built_in">__newindex</span> = <span class="function"><span class="keyword">function</span><span class="params">(t, k, v)</span></span></span><br><span class="line">  <span class="built_in">rawset</span>(t, k, v) <span class="comment">-- rawset 单纯写入 t1.a，不会触发 t 的 metatable 的 __newindex 机制</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line">t1 = &#123;&#125;</span><br><span class="line"><span class="built_in">setmetatable</span>(t1, m)</span><br><span class="line">t1.a = <span class="number">5</span></span><br></pre></td></tr></table></figure></li>
+<li><h4 id="行为传导"><a href="#行为传导" class="headerlink" title="行为传导"></a>行为传导</h4>当 <code>__index</code> 和 <code>__newindex</code> 是 <em>lua</em> 的 <em>table</em> 类型时，<code>__index</code> 和 <code>__newindex</code> 也能够设置 <em>metatable*，在这种情况下，会出现<code>__index</code> 和 <code>__newindex</code> 机制的传导现象。在 *lua 5.3</em> 下做如下实验：<br>读，链式传导<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line"><span class="comment">-- metatable1 settings</span></span><br><span class="line">x1 = &#123;&#125;</span><br><span class="line">x1.b = <span class="string">"b"</span></span><br><span class="line">m1 = &#123;&#125;</span><br><span class="line">m1.<span class="built_in">__index</span> = x1</span><br><span class="line"><span class="comment">-- metatable2 settings</span></span><br><span class="line">x2 = &#123;&#125;</span><br><span class="line">x2.c = <span class="string">"c"</span></span><br><span class="line">m2 = &#123;&#125;</span><br><span class="line">m2.<span class="built_in">__index</span> = x2</span><br><span class="line"><span class="comment">-- create link</span></span><br><span class="line"><span class="built_in">setmetatable</span>(x1, m2)</span><br><span class="line"><span class="comment">-- table settings</span></span><br><span class="line">t1 = &#123;&#125;</span><br><span class="line">t1.a = <span class="string">"a"</span></span><br><span class="line"><span class="built_in">setmetatable</span>(t1, m1)</span><br><span class="line"><span class="built_in">print</span>(t1.a, t1.b, t1.c, t1.d) <span class="comment">-- result: a    b    c    nil</span></span><br><span class="line"><span class="keyword">for</span> k, v <span class="keyword">in</span> <span class="built_in">pairs</span>(t1) <span class="keyword">do</span></span><br><span class="line">  <span class="built_in">print</span>(k, v)</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"><span class="comment">-- result: a    a</span></span><br><span class="line"><span class="comment">-- 读，链式传导，正常，传导至最末端</span></span><br></pre></td></tr></table></figure>
+读，环型传导<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line"><span class="comment">-- metatable settings</span></span><br><span class="line">x = &#123;&#125;</span><br><span class="line">x.b = <span class="string">"b"</span></span><br><span class="line">m = &#123;&#125;</span><br><span class="line">m.<span class="built_in">__index</span> = x</span><br><span class="line"><span class="comment">-- create ring</span></span><br><span class="line"><span class="built_in">setmetatable</span>(x, m)</span><br><span class="line"><span class="comment">-- table settings</span></span><br><span class="line">t = &#123;&#125;</span><br><span class="line">t.a = <span class="string">"a"</span></span><br><span class="line"><span class="built_in">setmetatable</span>(t, m)</span><br><span class="line"><span class="built_in">print</span>(t.a, t.b)</span><br><span class="line"><span class="comment">-- result: a    b</span></span><br><span class="line"><span class="comment">-- 读取存在的 key，正常</span></span><br><span class="line"><span class="built_in">print</span>(t.c)</span><br><span class="line"><span class="comment">-- result: 报错，stdin:1: '__index' chain too long ...</span></span><br><span class="line"><span class="comment">-- 读取不存在的 key，导致死循环</span></span><br></pre></td></tr></table></figure>
+写，链式传导<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line"><span class="comment">-- metatable1 settings</span></span><br><span class="line">x1 = &#123;&#125;</span><br><span class="line">x1.b = <span class="string">"b"</span></span><br><span class="line">m1 = &#123;&#125;</span><br><span class="line">m1.<span class="built_in">__newindex</span> = x1</span><br><span class="line"><span class="comment">-- metatable2 settings</span></span><br><span class="line">x2 = &#123;&#125;</span><br><span class="line">x2.c = <span class="string">"c"</span></span><br><span class="line">m2 = &#123;&#125;</span><br><span class="line">m2.<span class="built_in">__newindex</span> = x2</span><br><span class="line"><span class="comment">-- create link</span></span><br><span class="line"><span class="built_in">setmetatable</span>(x1, m2)</span><br><span class="line"><span class="comment">-- table settings</span></span><br><span class="line">t1 = &#123;&#125;</span><br><span class="line">t1.a = <span class="string">"a"</span></span><br><span class="line"><span class="built_in">setmetatable</span>(t1, m1)</span><br><span class="line">t1.a = <span class="string">"aa"</span></span><br><span class="line">t1.b = <span class="string">"bb"</span></span><br><span class="line">t1.c = <span class="string">"cc"</span></span><br><span class="line">t1.d = <span class="string">"dd"</span></span><br><span class="line"><span class="keyword">for</span> k, v <span class="keyword">in</span> <span class="built_in">pairs</span>(t1) <span class="keyword">do</span></span><br><span class="line">  <span class="built_in">print</span>(k, v)</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"><span class="comment">-- result: a    aa</span></span><br><span class="line"><span class="keyword">for</span> k, v <span class="keyword">in</span> <span class="built_in">pairs</span>(x1) <span class="keyword">do</span></span><br><span class="line">  <span class="built_in">print</span>(k, v)</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"><span class="comment">-- result: b    bb</span></span><br><span class="line"><span class="keyword">for</span> k, v <span class="keyword">in</span> <span class="built_in">pairs</span>(x2) <span class="keyword">do</span></span><br><span class="line">  <span class="built_in">print</span>(k, v)</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"><span class="comment">-- result: c    cc</span></span><br><span class="line"><span class="comment">--         d    dd</span></span><br><span class="line"><span class="comment">-- 写，链式传导，正常，传导至最末端</span></span><br></pre></td></tr></table></figure>
+写，环型传导<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line"><span class="comment">-- metatable settings</span></span><br><span class="line">x = &#123;&#125;</span><br><span class="line">x.b = <span class="string">"b"</span></span><br><span class="line">m = &#123;&#125;</span><br><span class="line">m.<span class="built_in">__newindex</span> = x</span><br><span class="line"><span class="comment">-- create ring</span></span><br><span class="line"><span class="built_in">setmetatable</span>(x, m)</span><br><span class="line"><span class="comment">-- table settings</span></span><br><span class="line">t = &#123;&#125;</span><br><span class="line">t.a = <span class="string">"a"</span></span><br><span class="line"><span class="built_in">setmetatable</span>(t, m)</span><br><span class="line">t.a = <span class="string">"aa"</span></span><br><span class="line">t.b = <span class="string">"bb"</span></span><br><span class="line"><span class="keyword">for</span> k, v <span class="keyword">in</span> <span class="built_in">pairs</span>(t) <span class="keyword">do</span></span><br><span class="line">  <span class="built_in">print</span>(k, v)</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"><span class="comment">-- result: a    aa</span></span><br><span class="line"><span class="keyword">for</span> k, v <span class="keyword">in</span> <span class="built_in">pairs</span>(x) <span class="keyword">do</span></span><br><span class="line">  <span class="built_in">print</span>(k, v)</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"><span class="comment">-- result: b    bb</span></span><br><span class="line"><span class="comment">-- 写入存在的 key，正常</span></span><br><span class="line">t.c = <span class="string">"cc"</span></span><br><span class="line"><span class="comment">-- 报错：stdin:1: '__index' chain too long ...</span></span><br><span class="line"><span class="comment">-- 写入不存在的 key，导致死循环</span></span><br></pre></td></tr></table></figure>
+结论如下：<br>把 <em>metatable</em> 的 <code>__index</code> 和 <code>__newindex</code> 作为 <em>table</em> 来使用时，<em>metatable</em> 行为在 <code>__index</code> 和 <code>__newindex</code> 上也会出现，并层层传导至最末端。应尽量避免出现环型传导。</li>
+<li><h4 id="面向对象基础（读，链式传导的紧凑形式）"><a href="#面向对象基础（读，链式传导的紧凑形式）" class="headerlink" title="面向对象基础（读，链式传导的紧凑形式）"></a>面向对象基础（读，链式传导的紧凑形式）</h4><figure class="highlight lua"><table><tr><td class="code"><pre><span class="line">m1 = &#123;&#125;</span><br><span class="line">m1.b = <span class="string">"b"</span></span><br><span class="line">m1.<span class="built_in">__index</span> = m1 <span class="comment">-- 自身作为 __index</span></span><br><span class="line">m2 = &#123;&#125;</span><br><span class="line">m2.c = <span class="string">"c"</span></span><br><span class="line">m2.<span class="built_in">__index</span> = m2 <span class="comment">-- 自身作为 __index</span></span><br><span class="line"><span class="built_in">setmetatable</span>(m2, m1)</span><br><span class="line">t = &#123;&#125;</span><br><span class="line">t.a = <span class="string">"a"</span></span><br><span class="line"><span class="built_in">setmetatable</span>(t, m2)</span><br><span class="line"><span class="built_in">print</span>(t.a, t.c, t.b)</span><br></pre></td></tr></table></figure>
+从面向对象的角度观察上述代码，t 继承了 m2 的成员，m2 继承了 m1 成员，实现了简单的继承特性。</li>
+</ul>
+</li>
+<li><h3 id="结束语"><a href="#结束语" class="headerlink" title="结束语"></a>结束语</h3>注意 <em>table<em>、</em>metatable</em> 和 <em>metamethod</em> 之间的关系：<em>table</em> 可设置 <em>metatable</em>, <em>metatable</em> 是普通的 <em>table</em> 数据类型，<em>metamethod</em> 是 <em>metatable</em> 的成员。<br>可利用 <em>metamethod*：<code>__index</code> 和 <code>__newindex</code> 控制 *table</em> 成员的访问，并实现面向对象特性。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/lua/" rel="tag"># lua</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2017/20171009-06.html" rel="prev" title="（连载）在 windows 中搭建 lua 应用环境（七-完结）">
+      <i class="fa fa-chevron-left"></i> （连载）在 windows 中搭建 lua 应用环境（七-完结）
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2017/20171107-02.html" rel="next" title="lua module 和 package 小结">
+      lua module 和 package 小结 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+        </div>
+        
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Django</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

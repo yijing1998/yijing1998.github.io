@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  
+  <link rel="stylesheet" href="/lib/animate-css/animate.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.geeky.win","root":"/","scheme":"Gemini","version":"8.0.0-rc.4","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}}};
+  </script>
+
+  <meta name="description" content="从 lua 5.1 开始，lua 定义了一些关于 module 和 package 的规则，使 module 能够一次创建，到处使用。同时，用 module 和 package 组织代码，使代码组织结构更加清晰，便于管理。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="lua module 和 package 小结">
+<meta property="og:url" content="https://blog.geeky.win/2017/20171107-02.html">
+<meta property="og:site_name" content="Simple Mind">
+<meta property="og:description" content="从 lua 5.1 开始，lua 定义了一些关于 module 和 package 的规则，使 module 能够一次创建，到处使用。同时，用 module 和 package 组织代码，使代码组织结构更加清晰，便于管理。">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2017-11-07T02:15:05.000Z">
+<meta property="article:modified_time" content="2020-07-23T13:14:59.056Z">
+<meta property="article:author" content="Django">
+<meta property="article:tag" content="lua">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://blog.geeky.win/2017/20171107-02.html">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>lua module 和 package 小结 | Simple Mind</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <main class="main">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+        <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Simple Mind</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">Hello world!</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-首页">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-日常">
+
+    <a href="/categories/daily/" rel="section"><i class="fas fa-calendar-alt fa-fw"></i>日常</a>
+
+  </li>
+        <li class="menu-item menu-item-归纳">
+
+    <a href="/categories/conclusion/" rel="section"><i class="fas fa-cogs fa-fw"></i>归纳</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <section class="post-toc-wrap sidebar-panel">
+          <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#module-和-package-定义"><span class="nav-number">1.</span> <span class="nav-text">module 和 package 定义</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#module"><span class="nav-number">1.1.</span> <span class="nav-text">module</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#package"><span class="nav-number">1.2.</span> <span class="nav-text">package</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#module-的加载过程"><span class="nav-number">2.</span> <span class="nav-text">module 的加载过程</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#检查-table-package-loaded"><span class="nav-number">2.1.</span> <span class="nav-text">检查 table: package.loaded</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#查找对应的-lua-文件"><span class="nav-number">2.2.</span> <span class="nav-text">查找对应的 lua 文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#查找对应的-c-library"><span class="nav-number">2.3.</span> <span class="nav-text">查找对应的 c library</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#获取-module"><span class="nav-number">2.4.</span> <span class="nav-text">获取 module</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#查找-module-文件"><span class="nav-number">3.</span> <span class="nav-text">查找 module 文件</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#lua-文件的路径模板"><span class="nav-number">3.1.</span> <span class="nav-text">.lua 文件的路径模板</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#c-library-文件的路径模板"><span class="nav-number">3.2.</span> <span class="nav-text">c library 文件的路径模板</span></a></li></ol></li></ol></div>
+      </section>
+      <!--/noindex-->
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Django</p>
+  <div class="site-description" itemprop="description">A blog of nobody.</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">20</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+<div class="links-of-author animated">
+  <span class="links-of-author-item">
+    <img src="/images/rhca.png" alt="p2" width="70%" title="Red Hat Certified Architect in Infrastructure">
+    <a href='https://rhtapps.redhat.com/certifications/badge/verify/LRFJG4NEZN63FA65BCHVXX2KMAAEQU3CUPSQX2KSDXT6RW46LQ3T4V2LT2DQFPHMZNIKSLKTIWLQQ4U5NQYTCNA62RUWOCM34WWBUYQ='  title="Red Hat Certified Architect in Infrastructure" rel="noopener" target="_blank">RHCA</a>
+  </span>
+  <span class="links-of-author-item">
+    <img src="/images/rhce.png" alt="p2" width="70%" title="Red Hat Certified Engineer">
+    <a href='https://rhtapps.redhat.com/certifications/badge/verify/LRFJG4NEZN63FA65BCHVXX2KMAAEQU3CUPSQX2KSDXT6RW46LQ3XCZJWRJNV7ILTXVE4I6VB7OTCG4U5NQYTCNA62RUWOCM34WWBUYQ='  title="Red Hat Certified Engineer" rel="noopener" target="_blank">RHCE</a>
+  </span>
+  <span class="links-of-author-item">
+    <img src="/images/oci-cer.png" alt="p2" width="70%" title="OCI Developer Associate">
+    <a href='https://www.youracclaim.com/badges/7900cd96-5c33-49cf-8368-0397a8070048/public_url'  title="OCI Developer Associate" rel="noopener" target="_blank">OCI Developer Associate</a>
+  </span>
+  <span class="links-of-author-item">
+    <img src="/images/oci-cer.png" alt="p2" width="70%" title="OCI Foundation Associate">
+    <a href='https://www.youracclaim.com/badges/7900cd96-5c33-49cf-8368-0397a8070048/public_url' title="OCI Foundation Associate" rel="noopener" target="_blank">OCI Foundation Associate</a>
+  </span>
+</div>
+      </section>
+        <div class="back-to-top animated">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </header>
+
+      
+
+<noscript>
+  <div id="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+      <div class="main-inner">
+        
+
+        <div class="content post posts-expand">
+          
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://blog.geeky.win/2017/20171107-02.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Django">
+      <meta itemprop="description" content="A blog of nobody.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Simple Mind">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          lua module 和 package 小结
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-11-07 10:15:05" itemprop="dateCreated datePublished" datetime="2017-11-07T10:15:05+08:00">2017-11-07</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-07-23 21:14:59" itemprop="dateModified" datetime="2020-07-23T21:14:59+08:00">2020-07-23</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/conclusion/" itemprop="url" rel="index"><span itemprop="name">归纳</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>从 <em>lua 5.1</em> 开始，<em>lua</em> 定义了一些关于 <em>module</em> 和 <em>package</em> 的规则，使 <em>module</em> 能够一次创建，到处使用。同时，用 <em>module</em> 和 <em>package</em> 组织代码，使代码组织结构更加清晰，便于管理。</p>
+</blockquote>
+<a id="more"></a>
+<ul>
+<li><h3 id="module-和-package-定义"><a href="#module-和-package-定义" class="headerlink" title="module 和 package 定义"></a><em>module</em> 和 <em>package</em> 定义</h3><ul>
+<li><h4 id="module"><a href="#module" class="headerlink" title="module"></a><em>module</em></h4><em>module</em> 是一个文件，它包含了一些代码 <em>code<em>，这些代码能够返回一个 *table</em>。<br>需要注意两点，一是 *code</em> 可以是 <em>lua code</em> 或者 <em>c binary code*，二是这些代码能够被 *lua</em> 函数 <code>require(modulename)</code> 加载。</li>
+<li><h4 id="package"><a href="#package" class="headerlink" title="package"></a><em>package</em></h4><em>package</em> 是按照层级 <em>hierarchical</em> 组织的 <em>module</em> 的总称。<em>lua</em> 用点 <em>.</em> 来区分层级，如 <code>mod.sub</code> 中，<code>sub</code> 是 <code>mod</code> 的 <em>sub module</em></li>
+</ul>
+</li>
+<li><h3 id="module-的加载过程"><a href="#module-的加载过程" class="headerlink" title="module 的加载过程"></a><em>module</em> 的加载过程</h3><em>lua module</em> 的加载由 <em>lua</em> 函数 <code>require(modulename)</code> 引起，如果该函数执行成功，则返回一个代表该 <em>module</em> 的 <em>table*，该 *table</em> 包含 <em>module</em> 提供的各种数据（包括 <em>function</em> 和 <em>table</em>）。<ul>
+<li><h4 id="检查-table-package-loaded"><a href="#检查-table-package-loaded" class="headerlink" title="检查 table: package.loaded"></a>检查 <em>table</em>: <em>package.loaded</em></h4>如果 <em>module</em> 已存在，则直接返回该 <em>module</em>，否则执行下一步。</li>
+<li><h4 id="查找对应的-lua-文件"><a href="#查找对应的-lua-文件" class="headerlink" title="查找对应的 lua 文件"></a>查找对应的 <em>lua</em> 文件</h4>如果找到对应 <em>lua</em> 文件，则调用函数 <code>loadfile</code> 获取 <code>loader</code>，否则执行下一步。</li>
+<li><h4 id="查找对应的-c-library"><a href="#查找对应的-c-library" class="headerlink" title="查找对应的 c library"></a>查找对应的 <em>c library</em></h4>如果找到对应的 <em>c library</em>，则调用函数 <code>package.loadlib</code> 获取 <code>loader</code>，否则返回并提示错误信息。</li>
+<li><h4 id="获取-module"><a href="#获取-module" class="headerlink" title="获取 module"></a>获取 <em>module</em></h4>调用 <code>loader</code> 获得返回值，如果该返回值不为 <code>nil</code> 则保存该返回值至 <em>table</em>: <em>packge.loaded</em>，并返回该值，否则返回 <code>true</code></li>
+</ul>
+</li>
+<li><h3 id="查找-module-文件"><a href="#查找-module-文件" class="headerlink" title="查找 module 文件"></a>查找 <em>module</em> 文件</h3><em>lua</em> 通过 <em>module</em> 名称和路径模板来查找需要加载的 <em>module</em> 文件。<br>路径模板由 <em>;</em> 分割，<em>?</em> 则由 <em>module</em> 名称代替<br>假设路径模板为：<code>?;?.lua;/usr/local/lua/?/init.lua</code>，调用 <code>require(&quot;abc&quot;)</code> 后，查找的 <em>module</em> 文件路径包括：  <figure class="highlight lua"><table><tr><td class="code"><pre><span class="line">abc</span><br><span class="line">abc.lua</span><br><span class="line">/usr/<span class="keyword">local</span>/lua/abc/init.lua</span><br></pre></td></tr></table></figure>
+<ul>
+<li><h4 id="lua-文件的路径模板"><a href="#lua-文件的路径模板" class="headerlink" title=".lua 文件的路径模板"></a><em>.lua</em> 文件的路径模板</h4><em>.lua</em> 文件的路径模板由 <em>package.path</em> 变量值提供。<em>lua</em> 运行时负责 <em>package.path</em> 的设置。<em>package.path</em> 有三个来源：<br>一是操作系统环境变量 <code>LUA_PATH_5_3</code><br>二是操作系统环境变量 <code>LUA_PATH</code><br>三是 <em>lua</em> 源码编译时定义的默认路径模板<br><em>lua</em> 运行时依次检查三个来源，一旦某来源有效，则停止检查并设置 <em>package.path</em><br><em>lua</em> 源码编译时定义的默认搜索路径（linux lua 5.3）<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">/usr/local/share/lua/5.3/</span><br><span class="line">/usr/local/lib/lua/5.3/</span><br><span class="line">/usr/share/lua/5.3/</span><br><span class="line">./</span><br></pre></td></tr></table></figure>
+<em>lua</em> 源码编译时定义的默认搜索路径（windows lua 5.3），假设 <em>lua</em> 可执行文件所在目录为 <em>x</em><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">x/</span><br><span class="line">x/lua</span><br><span class="line">x/../share/lua/5.3/</span><br><span class="line">./</span><br></pre></td></tr></table></figure>
+在每个查找路径下，查找文件为 <code>?.lua</code> 或 <code>?/init.lua</code>，即以 <em>modulename</em> 命名的 <em>.lua</em> 文件，或者以 <em>modulename</em> 命名的文件夹下的 <em>init.lua</em>。<br>当请求子模块 <code>mod.sub</code> 时，会在查找路径的基础上，再在特定的子目录中查找，如<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">mod/sub.lua</span><br><span class="line">mod/sub/init.lua</span><br></pre></td></tr></table></figure></li>
+<li><h4 id="c-library-文件的路径模板"><a href="#c-library-文件的路径模板" class="headerlink" title="c library 文件的路径模板"></a><em>c library</em> 文件的路径模板</h4><em>c library</em> 文件的路径模板由 <em>package.cpath</em> 变量值提供。<em>lua</em> 运行时负责 <em>package.cpath</em> 的设置。<em>package.cpath</em> 有三个来源：<br>一是操作系统环境变量 <code>LUA_CPATH_5_3</code><br>二是操作系统环境变量 <code>LUA_CPATH</code><br>三是 <em>lua</em> 源码编译时定义的默认路径模板<br><em>lua</em> 运行时依次检查三个来源，一旦某来源有效，则停止检查并设置 <em>package.cpath</em><br><em>lua</em> 源码编译时定义的默认搜索路径（linux lua 5.3）<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">/usr/local/lib/lua/5.3/</span><br><span class="line">/usr/lib/lua/5.3/</span><br><span class="line">/usr/lib/i386-linux-gnu/lua/5.3/</span><br><span class="line">./</span><br></pre></td></tr></table></figure>
+<em>lua</em> 源码编译时定义的默认搜索路径（windows lua 5.3），假设 <em>lua</em> 可执行文件所在目录为 <em>x</em><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">x/</span><br><span class="line">x/../lib/lua/5.3/</span><br><span class="line">./</span><br></pre></td></tr></table></figure>
+在每个查找路径下，查找动态链接库文件 <em>(linux: .so, windows: .dll)*。<br>在 *linux</em> 操作系统下， 查找文件为 <code>?.so</code> 或 <code>?/init.lua</code>，即以 <em>modulename</em> 命名的 <em>.so</em> 文件。<br>当请求子模块 <code>mod.sub</code> 时，会在查找路径的基础上，再在特定的子目录中查找；同时，也会查找主模块对应的动态链接库文件，如<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">mod/sub.so</span><br><span class="line">mod.so</span><br></pre></td></tr></table></figure>
+查找 <em>loadall.so</em> 文件 <code>/usr/local/lib/lua/5.3/loadall.so</code><br>或查找 <em>loadall.dll</em> 文件 <code>x/loadall.dll</code>，其中 <code>x</code> 为 <em>lua</em> 可执行文件所在目录</li>
+</ul>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/lua/" rel="tag"># lua</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2017/20171103-01.html" rel="prev" title="lua 环境下基于 metatable 的 table 行为总结">
+      <i class="fa fa-chevron-left"></i> lua 环境下基于 metatable 的 table 行为总结
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2017/20171109-03.html" rel="next" title="lua 环境中变量的作用范围剖析">
+      lua 环境中变量的作用范围剖析 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+        </div>
+        
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Django</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
