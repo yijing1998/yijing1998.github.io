@@ -22,23 +22,21 @@
     var CONFIG = {"hostname":"blog.geeky.win","root":"/","scheme":"Gemini","version":"8.0.0-rc.4","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}}};
   </script>
 
-  <meta name="description" content="调用 hexo new &lt;title&gt; 生成 markdown 文档后，当启动 hexo server 时，提示异常或者虽然没有提示异常，但页面在浏览器里不能正常显示">
+  <meta name="description" content="配置通用的hexo工作环境，形成固定动作，提高配置效率。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="hexo server 问题汇总">
-<meta property="og:url" content="https://blog.geeky.win/2017/20170706-02.html">
+<meta property="og:title" content="配置hexo工作环境">
+<meta property="og:url" content="https://blog.geeky.win/2020/20200725-01.html">
 <meta property="og:site_name" content="Simple Mind">
-<meta property="og:description" content="调用 hexo new &lt;title&gt; 生成 markdown 文档后，当启动 hexo server 时，提示异常或者虽然没有提示异常，但页面在浏览器里不能正常显示">
+<meta property="og:description" content="配置通用的hexo工作环境，形成固定动作，提高配置效率。">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="http://qdkbsulxk.bkt.clouddn.com/201707/20170706p01.PNG">
-<meta property="article:published_time" content="2017-07-06T10:25:57.000Z">
-<meta property="article:modified_time" content="2020-07-23T06:44:49.569Z">
+<meta property="article:published_time" content="2020-07-25T12:33:41.000Z">
+<meta property="article:modified_time" content="2020-07-25T15:35:38.682Z">
 <meta property="article:author" content="Django">
 <meta property="article:tag" content="hexo">
-<meta property="article:tag" content="exception">
+<meta property="article:tag" content="windows">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://qdkbsulxk.bkt.clouddn.com/201707/20170706p01.PNG">
 
-<link rel="canonical" href="https://blog.geeky.win/2017/20170706-02.html">
+<link rel="canonical" href="https://blog.geeky.win/2020/20200725-01.html">
 
 
 <script class="page-configurations">
@@ -51,7 +49,7 @@
   };
 </script>
 
-  <title>hexo server 问题汇总 | Simple Mind</title>
+  <title>配置hexo工作环境 | Simple Mind</title>
   
 
 
@@ -185,7 +183,7 @@
 
       <!--noindex-->
       <section class="post-toc-wrap sidebar-panel">
-          <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#YAMLException-的处理方法"><span class="nav-number">1.</span> <span class="nav-text">YAMLException 的处理方法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#分析"><span class="nav-number">1.1.</span> <span class="nav-text">分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#处理"><span class="nav-number">1.2.</span> <span class="nav-text">处理</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#部分页面不能正常显示的处理方法"><span class="nav-number">2.</span> <span class="nav-text">部分页面不能正常显示的处理方法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#分析-1"><span class="nav-number">2.1.</span> <span class="nav-text">分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#处理-1"><span class="nav-number">2.2.</span> <span class="nav-text">处理</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参考链接"><span class="nav-number">3.</span> <span class="nav-text">参考链接</span></a></li></ol></div>
+          <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#安装配置node、git"><span class="nav-number">1.</span> <span class="nav-text">安装配置node、git</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#安装node"><span class="nav-number">1.1.</span> <span class="nav-text">安装node</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#安装git"><span class="nav-number">1.2.</span> <span class="nav-text">安装git</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#安装配置hexo"><span class="nav-number">2.</span> <span class="nav-text">安装配置hexo</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#安装hexo"><span class="nav-number">2.1.</span> <span class="nav-text">安装hexo</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#配置hexo"><span class="nav-number">2.2.</span> <span class="nav-text">配置hexo</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#验证"><span class="nav-number">3.</span> <span class="nav-text">验证</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#工作流程"><span class="nav-number">4.</span> <span class="nav-text">工作流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#结束语"><span class="nav-number">5.</span> <span class="nav-text">结束语</span></a></li></ol></div>
       </section>
       <!--/noindex-->
 
@@ -265,7 +263,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://blog.geeky.win/2017/20170706-02.html">
+    <link itemprop="mainEntityOfPage" href="https://blog.geeky.win/2020/20200725-01.html">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -278,7 +276,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          hexo server 问题汇总
+          配置hexo工作环境
         </h1>
 
         <div class="post-meta">
@@ -287,23 +285,17 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
+              
 
-              <time title="Created: 2017-07-06 18:25:57" itemprop="dateCreated datePublished" datetime="2017-07-06T18:25:57+08:00">2017-07-06</time>
+              <time title="Created: 2020-07-25 20:33:41 / Modified: 23:35:38" itemprop="dateCreated datePublished" datetime="2020-07-25T20:33:41+08:00">2020-07-25</time>
             </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-07-23 14:44:49" itemprop="dateModified" datetime="2020-07-23T14:44:49+08:00">2020-07-23</time>
-              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
               </span>
               <span class="post-meta-item-text">In</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%BD%AF%E4%BB%B6%E2%80%A2%E7%8E%AF%E5%A2%83%E2%80%A2%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">软件•环境•工具</span></a>
+                  <a href="/categories/conclusion/" itemprop="url" rel="index"><span itemprop="name">归纳</span></a>
                 </span>
             </span>
 
@@ -319,27 +311,70 @@
 
       
         <blockquote>
-<p>调用 <code>hexo new &lt;title&gt;</code> 生成 markdown 文档后，当启动 <code>hexo server</code> 时，提示异常或者虽然没有提示异常，但页面在浏览器里不能正常显示</p>
+<p>配置通用的<code>hexo</code>工作环境，形成固定动作，提高配置效率。</p>
 </blockquote>
 <a id="more"></a>
 <ul>
-<li><h3 id="YAMLException-的处理方法"><a href="#YAMLException-的处理方法" class="headerlink" title="YAMLException 的处理方法"></a>YAMLException 的处理方法</h3><ul>
-<li><h4 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h4>调用 <code>hexo server</code> 后，出现异常信息，如图所示：<br><img src="http://qdkbsulxk.bkt.clouddn.com/201707/20170706p01.PNG" alt="YAMLException" title="YAMLException"><br>这是一个 <em>yaml</em> 异常，<em>hexo</em> 会在某个时候使用 <em>yaml</em> 引擎处理该文件。详细的异常信息显示，文件内容的 title 部分在 <code>:</code> 处有问题，检查该 *.md 文件：  <pre><code class="markdown">title: gpg --gen-key: Not enough random bytes available
-date: 2017-07-06 18:25:57
-tags:</code></pre>
-<em>yaml</em> 引擎把 title 中的 <code>:</code> 当成key/value的分隔符来处理。</li>
-<li><h4 id="处理"><a href="#处理" class="headerlink" title="处理"></a>处理</h4>用引号包含该字符串，可使 <em>yaml</em> 引擎忽略特殊字符。</li>
+<li><h3 id="安装配置node、git"><a href="#安装配置node、git" class="headerlink" title="安装配置node、git"></a>安装配置node、git</h3><ul>
+<li><h4 id="安装node"><a href="#安装node" class="headerlink" title="安装node"></a>安装node</h4><p>windows环境下，下载安装包或portable包。对于portable包而言，本工作环境仅需配置<code>Path</code>。</p>
+<p>linux环境下，用包管理器安装node。</p>
+</li>
+<li><h4 id="安装git"><a href="#安装git" class="headerlink" title="安装git"></a>安装git</h4><p>windows环境下，下载安装包或portable包。对于portable，环境变量配置如下：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">set gitdir=c:\portablegit</span><br><span class="line">set path=%gitdir%\cmd;%path%</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>注：可在windows界面保存环境变量，此电脑右键-&gt;属性-&gt;高级系统设置-&gt;环境变量，环境变量名为<code>gitdir</code>和<code>path</code>。</p>
+</blockquote>
+<p>linux环境下，用包管理器安装git。</p>
+<p>通用配置1：创建ssh-key（用于免密访问git remote repo，默认公钥文件<code>~/.ssh/id_rsa.pub</code>）</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">ssh-keygen</span><br></pre></td></tr></table></figure>
+<p>通用配置2：设置user.name和user.email</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">git config --global user.name &lt;yourname&gt;</span><br><span class="line">git config --global user.email &lt;youremail&gt;</span><br></pre></td></tr></table></figure>
+</li>
 </ul>
 </li>
-<li><h3 id="部分页面不能正常显示的处理方法"><a href="#部分页面不能正常显示的处理方法" class="headerlink" title="部分页面不能正常显示的处理方法"></a>部分页面不能正常显示的处理方法</h3><ul>
-<li><h4 id="分析-1"><a href="#分析-1" class="headerlink" title="分析"></a>分析</h4>调用 <code>hexo new &lt;title&gt;</code> 后，生成一个 *.md 文件，文件初始内容为：  <pre><code class="markdown">title: ######
-date: 2017-07-06 18:25:57
-tags:</code></pre>
-文件内容的 title 部分将被转换为 <em>html</em> 格式内容，如果 title 包含html关键字，此关键字会与 <em>html</em> 模板中原有的 <em>html</em> 标记产生冲突，造成浏览器解析错误。</li>
-<li><h4 id="处理-1"><a href="#处理-1" class="headerlink" title="处理"></a>处理</h4>使用html转义字符。 例如：title中包含 <code>&lt;</code> 或 <code>&gt;</code> ，则使用 <code>&amp;lt;</code> 或 <code>&amp;gt;</code> 代替</li>
+<li><h3 id="安装配置hexo"><a href="#安装配置hexo" class="headerlink" title="安装配置hexo"></a>安装配置hexo</h3><ul>
+<li><h4 id="安装hexo"><a href="#安装hexo" class="headerlink" title="安装hexo"></a>安装hexo</h4><p>运行命令</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">npm install hexo-cli -g</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>注：windows环境下，shell环境请首选<code>cmd</code>，而不是<code>powershell</code>或<code>git-bash</code>。</p>
+</blockquote>
+</li>
+<li><h4 id="配置hexo"><a href="#配置hexo" class="headerlink" title="配置hexo"></a>配置hexo</h4><p>初始化工作目录，获取theme文件</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">hexo init &lt;your-blog-folder-name&gt;</span><br><span class="line">cd &lt;your-blog-folder-name&gt;</span><br><span class="line">git clone theme-repo-url themes/&lt;theme-name&gt;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>注：windows环境下，<code>powershell</code>默认不能运行<code>hexo</code>命令，仍建议首选<code>cmd</code>。</p>
+</blockquote>
+<blockquote>
+<p>注：若使用git部署，在运行<code>hexo deploy</code>命令时，会报错<code>ERROR Deployer not found: git</code>，此时需执行<code>npm install --save hexo-deployer-git</code>安装所需module。</p>
+</blockquote>
+<p>获取用户*.md文件</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">git clone user-post-repo-url &lt;mysourcefolder&gt;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>注：用户*.md文件可理解为&lt;your-blog-folder-name&gt;/source文件夹的全部内容，此外还包含自定义的_config.yml文件和_date/文件夹。_config.yml负责覆盖hexo配置，_date/负责覆盖theme配置。</p>
+</blockquote>
+<p>关联用户*.md文件和hexo，在&lt;your-blog-folder-name&gt;文件夹下创建名为source的符号链接，指向&lt;mysourcefolder&gt;（需要先重命名或删除原source目录）。</p>
+<blockquote>
+<p>注：windows环境下，使用<code>mklink</code>命令创建符号链接，注意事项可<a href="/2020/20200724-02.html">参考</a>我的这篇文章。</p>
+</blockquote>
+</li>
 </ul>
 </li>
-<li><h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3>[1] <a href="http://www.ruanyifeng.com/blog/2016/07/yaml.html?f=tt" target="_blank" rel="noopener" title="YAML 语言教程 阮一峰">YAML 语言教程 阮一峰 </a><br>[2] <a href="https://www.baidu.com/link?url=xf_Al3sillVeqHpIn0kJrh7a1F7sKt6O_zAGhdZnLW6ZlHpEEWQ3y_TUZQ6FwNPl_zJzth-48Nd4gAtghXTIIK&wd=&eqid=d1dd010f00016906000000025961a571" target="_blank" rel="noopener" title="YAML_百度百科">YAML_百度百科</a></li>
+<li><h3 id="验证"><a href="#验证" class="headerlink" title="验证"></a>验证</h3><p>启动server</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">hexo server --config &lt;your-blog-folder-name&gt;/source/_config.yml --cwd  &lt;your-blog-folder-name&gt; --debug --draft</span><br></pre></td></tr></table></figure>
+<p>部署</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">hexo deploy --config &lt;your-blog-folder-name&gt;/source/_config.yml --cwd  &lt;your-blog-folder-name&gt; --debug --draft</span><br></pre></td></tr></table></figure></li>
+<li><h3 id="工作流程"><a href="#工作流程" class="headerlink" title="工作流程"></a>工作流程</h3><p>推荐的工作流程如下：</p>
+<p>启动server-&gt;写post（重复动作/本地检查/commit）-&gt;hexodeploy（包含远端检查）-&gt;push动作（保存source/内容至远端仓库）</p>
+<blockquote>
+<p>注：结合CI/CD工具，push动作就能触发自动部署，工作流程变为-启动server-&gt;写post（重复动作/本地检查/commit/push）。涉及另一个story，不赘述。</p>
+</blockquote>
+</li>
+<li><h3 id="结束语"><a href="#结束语" class="headerlink" title="结束语"></a>结束语</h3><p>此配置过程对官方文件修改极少，仅创建了一个名为source的符号链接，方便官方版本的替换；同时解耦了用户*.md文件和官方文件，最大限度减少了相互影响。</p>
+<p>此配置过程可通过脚本自动化完成，也可用docker实现。2年前用bash实现了一个<a href="https://github.com/yijing1998/hexo-blog-helper" target="_blank" rel="noopener">helper</a>，现在看来略显幼稚，有时间再改吧。</p>
+<blockquote>
+<p>注：再次强调windows环境下小心使用<code>mklink</code>，windows环境下<code>git-bash</code>中的<code>ln</code>不能正常工作，避坑请点<a href="/2020/20200724-02.html">这里</a>。</p>
+</blockquote>
+</li>
 </ul>
 
     </div>
@@ -351,7 +386,7 @@ tags:</code></pre>
       <footer class="post-footer">
           <div class="post-tags">
               <a href="/tags/hexo/" rel="tag"># hexo</a>
-              <a href="/tags/exception/" rel="tag"># exception</a>
+              <a href="/tags/windows/" rel="tag"># windows</a>
           </div>
 
         
@@ -360,13 +395,10 @@ tags:</code></pre>
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2017/20170706-01.html" rel="prev" title="gpg --gen-key: Not enough random bytes available">
-      <i class="fa fa-chevron-left"></i> gpg --gen-key: Not enough random bytes available
+    <a href="/2020/20200724-02.html" rel="prev" title="mklink 避坑指南">
+      <i class="fa fa-chevron-left"></i> mklink 避坑指南
     </a></div>
-      <div class="post-nav-item">
-    <a href="/2017/20170718-03.html" rel="next" title="Git Push without user interaction">
-      Git Push without user interaction <i class="fa fa-chevron-right"></i>
-    </a></div>
+      <div class="post-nav-item"></div>
     </div>
       </footer>
     
