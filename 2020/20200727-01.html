@@ -22,18 +22,21 @@
     var CONFIG = {"hostname":"blog.geeky.win","root":"/","scheme":"Gemini","version":"8.0.0-rc.4","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}}};
   </script>
 
-  <meta name="description" content="A blog of nobody.">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Simple Mind">
-<meta property="og:url" content="https://blog.geeky.win/tags/ssh/index.html">
+  <meta name="description" content="openwrt环境提供了uci方式配置dnsmasq，配置文件是&#x2F;etc&#x2F;config&#x2F;dhcp.conf，dnsmasq本身也有配置文件，比如&#x2F;etc&#x2F;dnsmasq.conf，它们之间的关系怎样，如何运作？似乎找到些线索，与大家分享。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="在openwrt环境下配置dnsmasq">
+<meta property="og:url" content="https://blog.geeky.win/2020/20200727-01.html">
 <meta property="og:site_name" content="Simple Mind">
-<meta property="og:description" content="A blog of nobody.">
+<meta property="og:description" content="openwrt环境提供了uci方式配置dnsmasq，配置文件是&#x2F;etc&#x2F;config&#x2F;dhcp.conf，dnsmasq本身也有配置文件，比如&#x2F;etc&#x2F;dnsmasq.conf，它们之间的关系怎样，如何运作？似乎找到些线索，与大家分享。">
 <meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-07-27T07:42:04.000Z">
+<meta property="article:modified_time" content="2020-07-27T09:05:00.715Z">
 <meta property="article:author" content="Django">
-<meta property="article:tag" content="code os tech geek">
+<meta property="article:tag" content="openwrt">
+<meta property="article:tag" content="dnsmasq">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://blog.geeky.win/tags/ssh/">
+<link rel="canonical" href="https://blog.geeky.win/2020/20200727-01.html">
 
 
 <script class="page-configurations">
@@ -41,12 +44,12 @@
   CONFIG.page = {
     sidebar: "",
     isHome : false,
-    isPost : false,
+    isPost : true,
     lang   : 'en'
   };
 </script>
 
-  <title>Tag: ssh | Simple Mind</title>
+  <title>在openwrt环境下配置dnsmasq | Simple Mind</title>
   
 
 
@@ -168,7 +171,7 @@
 
   <aside class="sidebar">
 
-    <div class="sidebar-inner sidebar-overview-active">
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
       <ul class="sidebar-nav">
         <li class="sidebar-nav-toc">
           Table of Contents
@@ -180,6 +183,7 @@
 
       <!--noindex-->
       <section class="post-toc-wrap sidebar-panel">
+          <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#主要配置文件"><span class="nav-number">1.</span> <span class="nav-text">主要配置文件</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#uci配置文件：-etc-config-dhcp-conf"><span class="nav-number">1.1.</span> <span class="nav-text">uci配置文件：&#x2F;etc&#x2F;config&#x2F;dhcp.conf</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#dnsmasq本身的配置文件：-etc-dnsmasq-conf"><span class="nav-number">1.2.</span> <span class="nav-text">dnsmasq本身的配置文件：&#x2F;etc&#x2F;dnsmasq.conf</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#运行时配置文件：-var-dnsmasq-conf-cfgxxxx"><span class="nav-number">1.3.</span> <span class="nav-text">运行时配置文件：&#x2F;var&#x2F;dnsmasq.conf.cfgxxxx</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#结论"><span class="nav-number">2.</span> <span class="nav-text">结论</span></a></li></ol></div>
       </section>
       <!--/noindex-->
 
@@ -252,51 +256,112 @@
       <div class="main-inner">
         
 
-        <div class="content tag">
+        <div class="content post posts-expand">
           
 
+    
   
   
-  
-  <div class="post-block">
-    <div class="posts-collapse">
-      <div class="collection-title">
-        <h2 class="collection-header">ssh
-          <small>Tag</small>
-        </h2>
-      </div>
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://blog.geeky.win/2020/20200727-01.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Django">
+      <meta itemprop="description" content="A blog of nobody.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Simple Mind">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          在openwrt环境下配置dnsmasq
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-07-27 15:42:04 / Modified: 17:05:00" itemprop="dateCreated datePublished" datetime="2020-07-27T15:42:04+08:00">2020-07-27</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/daily/" itemprop="url" rel="index"><span itemprop="name">日常</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
 
       
-    <div class="collection-year">
-      <span class="collection-header">2017</span>
+        <blockquote>
+<p>openwrt环境提供了uci方式配置dnsmasq，配置文件是<code>/etc/config/dhcp.conf</code>，dnsmasq本身也有配置文件，比如<code>/etc/dnsmasq.conf</code>，它们之间的关系怎样，如何运作？似乎找到些线索，与大家分享。</p>
+</blockquote>
+<a id="more"></a>
+<ul>
+<li><h3 id="主要配置文件"><a href="#主要配置文件" class="headerlink" title="主要配置文件"></a>主要配置文件</h3><ul>
+<li><h4 id="uci配置文件：-etc-config-dhcp-conf"><a href="#uci配置文件：-etc-config-dhcp-conf" class="headerlink" title="uci配置文件：/etc/config/dhcp.conf"></a>uci配置文件：<code>/etc/config/dhcp.conf</code></h4>该文件能够通过luci界面进行修改，后台把它转换成dnsmasq能够识别的配置项。</li>
+<li><h4 id="dnsmasq本身的配置文件：-etc-dnsmasq-conf"><a href="#dnsmasq本身的配置文件：-etc-dnsmasq-conf" class="headerlink" title="dnsmasq本身的配置文件：/etc/dnsmasq.conf"></a>dnsmasq本身的配置文件：<code>/etc/dnsmasq.conf</code></h4>通常情况下，dnsmasq运行时会读取该文件，但默认情况下，该文件全是注释<code>#</code>，看似不起任何作用。</li>
+<li><h4 id="运行时配置文件：-var-dnsmasq-conf-cfgxxxx"><a href="#运行时配置文件：-var-dnsmasq-conf-cfgxxxx" class="headerlink" title="运行时配置文件：/var/dnsmasq.conf.cfgxxxx"></a>运行时配置文件：<code>/var/dnsmasq.conf.cfgxxxx</code></h4>用<code>ps</code>命令查看dnsmasq进程信息，可看到如下内容：<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">ps | grep dns</span><br><span class="line">......</span><br><span class="line">1056 dnsmasq   1344 S    /usr/sbin/dnsmasq -C /var/etc/dnsmasq.conf.cfg01411c</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+查看这个文件，真相浮出水面<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cat /var/etc/dnsmasq.conf.cfg01411c</span><br><span class="line"><span class="meta">#</span><span class="bash"> auto-generated config file from /etc/config/dhcp</span></span><br><span class="line">conf-file=/etc/dnsmasq.conf</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+可以看出，dnsmasq运行时读取的配置文件是<code>/var/dnsmasq.conf.cfgxxxx</code>，该配置文件由<code>/etc/config/dhcp.conf</code>转换而来；从文件中的配置项<code>conf-file=/etc/dnsmasq.conf</code>来看，dnsmasq运行时还会读取<code>/etc/dnsmasq.conf</code>。</li>
+</ul>
+</li>
+<li><h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><p>从配置文件情况，可以这样配置openwrt：通过luci界面配置dnsmasq，或通过修改<code>/etc/dnsmasq.conf</code>文件配置dnsmasq。</p>
+<p>配置原则：尽量使用luci界面配置dnsmasq，如果出现luci界面不支持的配置项，则考虑在<code>/etc/dnsmasq.conf</code>中进行配置。</p>
+<blockquote>
+<p>注：luci不支持的配置项，比如srv-host、rebind-domain-ok等。</p>
+</blockquote>
+</li>
+</ul>
+
     </div>
 
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
+    
+    
+    
 
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2017-07-18T13:13:20+08:00"
-              content="2017-07-18">
-          07-18
-        </time>
-      </div>
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/openwrt/" rel="tag"># openwrt</a>
+              <a href="/tags/dnsmasq/" rel="tag"># dnsmasq</a>
+          </div>
 
-      <div class="post-title">
-          <a class="post-title-link" href="/2017/20170718-03.html" itemprop="url">
-            <span itemprop="name">Git Push without user interaction</span>
-          </a>
-      </div>
+        
 
-    </header>
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/20200725-01.html" rel="prev" title="配置hexo工作环境">
+      <i class="fa fa-chevron-left"></i> 配置hexo工作环境
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/20200727-02.html" rel="next" title="在openwrt下安装vlmcsd">
+      在openwrt下安装vlmcsd <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
   </article>
-
-    </div>
-  </div>
   
   
-  
-
   
 
 
